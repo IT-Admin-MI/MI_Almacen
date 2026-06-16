@@ -2,12 +2,14 @@ class Usuario {
   final int? id;
   final String nombre;
   final String password;
+  final String descripcion;
   final String rol;
 
   Usuario({
     this.id,
     required this.nombre,
     required this.password,
+    required this.descripcion,
     required this.rol,
   });
 
@@ -25,6 +27,7 @@ class Usuario {
       id: map['id'],
       nombre: map['nombre'],
       password: map['password'],
+      descripcion: map['descripcion'],
       rol: map['rol'],
     );
   }

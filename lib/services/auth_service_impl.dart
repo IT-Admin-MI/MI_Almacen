@@ -10,14 +10,10 @@ import 'firebase_service.dart';
 
 class AuthServiceImpl implements AuthService {
 
-  static const String sessionKey =
-      'user_session';
-
-  static const String loginDateKey =
-      'last_login_validation';
+  static const String sessionKey = 'user_session';
+  static const String loginDateKey = 'last_login_validation';
 
   final FirebaseService firebaseService;
-
   final UsuarioRepository usuarioRepository;
 
   AuthServiceImpl({
@@ -31,32 +27,44 @@ class AuthServiceImpl implements AuthService {
       String password,
       ) async {
 
-    final usuario =
+    final usuarioFirebase =
     await firebaseService.login(
       nombre,
       password,
     );
 
-    if (usuario == null) {
+    if (usuarioFirebase == null) {
       return false;
     }
 
-    final existente =
+    final usuarioLocal =
     await usuarioRepository.getByNombre(
-      usuario.nombre,
+      usuarioFirebase.nombre,
     );
 
-    if (existente == null) {
+    if (usuarioLocal == null) {
 
       await usuarioRepository.insert(
-        usuario,
+        usuarioFirebase,
+      );
+
+    } else {
+
+      await usuarioRepository.update(
+        Usuario(
+          id: usuarioLocal.id,
+          nombre: usuarioFirebase.nombre,
+          password: usuarioFirebase.password,
+          descripcion: usuarioFirebase.descripcion,
+          rol: usuarioFirebase.rol,
+        ),
       );
     }
 
     final sesion = SesionUsuario(
-      usuarioId: usuario.id ?? 0,
-      nombre: usuario.nombre,
-      rol: usuario.rol,
+      usuarioId: usuarioLocal?.id ?? 0,
+      nombre: usuarioFirebase.nombre,
+      rol: usuarioFirebase.rol,
     );
 
     final prefs =
@@ -84,7 +92,6 @@ class AuthServiceImpl implements AuthService {
     await SharedPreferences.getInstance();
 
     await prefs.remove(sessionKey);
-
     await prefs.remove(loginDateKey);
   }
 
@@ -148,9 +155,44 @@ class AuthServiceImpl implements AuthService {
       return true;
     }
 
-    await logout();
+    final sesion =
+    await obtenerSesion();
 
-    return false;
+    if (sesion == null) {
+      return false;
+    }
+
+    final usuario =
+    await usuarioRepository.getByNombre(
+      sesion.nombre,
+    );
+
+    if (usuario == null) {
+
+      await logout();
+
+      return false;
+    }
+
+    final usuarioFirebase =
+    await firebaseService.login(
+      usuario.nombre,
+      usuario.password,
+    );
+
+    if (usuarioFirebase == null) {
+
+      await logout();
+
+      return false;
+    }
+
+    await prefs.setString(
+      loginDateKey,
+      DateTime.now().toIso8601String(),
+    );
+
+    return true;
   }
 
   @override

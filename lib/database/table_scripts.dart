@@ -3,7 +3,8 @@ CREATE TABLE usuarios(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   password TEXT NOT NULL,
-  rol TEXT NOT NULL
+  descripcion TEXT NOT NULL,
+  rol INTEGER NOT NULL
 )
 ''';
 
@@ -11,6 +12,7 @@ const String createProyectosTable = '''
 CREATE TABLE proyectos(
   clave TEXT PRIMARY KEY,
   descripcion TEXT NOT NULL,
+  orden INTEGER NOT NULL,
   fecha_entrega TEXT NOT NULL
 )
 ''';
