@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+import '../models/Material.dart';
 
 abstract class MaterialRepository {
 
   Future<List<Material>> getAll();
 
-  Future<Material?> getByClave(
-      String clave,
+  Future<Material?> getByCodigo(
+      String codigo,
       );
 
   Future<void> insert(
@@ -17,12 +17,11 @@ abstract class MaterialRepository {
       );
 
   Future<void> delete(
-      String clave,
+      String codigo,
       );
 
   Future<void> importarDesdeExcel(
       String filePath,
       );
 
-  Future<void> sincronizarFirebase();
 }
