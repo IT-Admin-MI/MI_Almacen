@@ -24,4 +24,17 @@ class Proyecto {
       fecha_entrega: map['fecha_entrega'],
     );
   }
+
+  factory Proyecto.fromFirebase(
+      Map<String, dynamic> data,
+      ) {
+
+    return Proyecto(
+      clave: data['codigo'] ?? '',
+      descripcion: data['nombre'] ?? '',
+      fecha_entrega: DateTime.parse(
+        data['fechaEntrega'],
+      ),
+    );
+  }
 }

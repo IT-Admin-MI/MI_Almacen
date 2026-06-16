@@ -1,27 +1,20 @@
-import 'package:mi_almacen/models/Sesion.dart';
-import 'package:mi_almacen/models/Usuario.dart';
+import '../models/Sesion.dart';
+import '../models/Usuario.dart';
 
-class AuthService {
+abstract class AuthService {
 
-  Future<Usuario?> login(
+  Future<bool> login(
       String nombre,
       String password,
-      ) async {
+      );
 
-  }
+  Future<void> logout();
 
-  Future<void> guardarSesion(
-      SesionUsuario sesion
-      ) async {
+  Future<bool> haySesionActiva();
 
-  }
+  Future<SesionUsuario?> obtenerSesion();
 
-  Future<SesionUsuario?> obtenerSesion()
-  async {
+  Future<bool> validarSesion();
 
-  }
-
-  Future<void> cerrarSesion() async {
-
-  }
+  Future<Usuario?> usuarioActual();
 }

@@ -20,4 +20,5 @@ abstract class ProyectoRepository {
       String clave,
       );
 
+  Future<void> sincronizarFirebase();
 }

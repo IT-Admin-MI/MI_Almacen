@@ -1,8 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/Proyecto.dart';
+import '../models/Usuario.dart';
 
-class FirebaseService {
+abstract class FirebaseService {
 
-  final FirebaseFirestore firestore =
-      FirebaseFirestore.instance;
+  Future<Usuario?> login(
+      String nombre,
+      String password,
+      );
+
+  Future<List<Proyecto>> obtenerProyectos();
 
 }

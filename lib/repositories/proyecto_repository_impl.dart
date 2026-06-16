@@ -1,3 +1,5 @@
+import 'package:mi_almacen/services/firebase_service.dart';
+
 import '../database/database_helper.dart';
 import '../models/Proyecto.dart';
 import 'proyecto_repository.dart';
@@ -6,10 +8,15 @@ class ProyectoRepositoryImpl
     implements ProyectoRepository {
 
   final DatabaseHelper databaseHelper;
+  final FirebaseService firebaseService;
+
 
   ProyectoRepositoryImpl({
     required this.databaseHelper,
+    required this.firebaseService,
   });
+
+
 
   @override
   Future<List<Proyecto>> getAll() async {
@@ -99,4 +106,34 @@ class ProyectoRepositoryImpl
       whereArgs: [clave],
     );
   }
+
+  @override
+  Future<void> sincronizarFirebase() async {
+
+    final proyectos =
+    await firebaseService
+        .obtenerProyectos();
+
+    for (final proyecto in proyectos) {
+
+      final existente =
+      await getByClave(
+        proyecto.clave,
+      );
+
+      if (existente == null) {
+
+        await insert(
+          proyecto,
+        );
+
+      } else {
+
+        await update(
+          proyecto,
+        );
+      }
+    }
+  }
+
 }
