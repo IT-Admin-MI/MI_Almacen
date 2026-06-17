@@ -3,7 +3,7 @@ class Usuario {
   final String nombre;
   final String password;
   final String descripcion;
-  final String rol;
+  final int rol;
 
   Usuario({
     this.id,
@@ -18,6 +18,7 @@ class Usuario {
       'id': id,
       'nombre': nombre,
       'password': password,
+      'descripcion': descripcion,
       'rol': rol,
     };
   }

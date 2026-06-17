@@ -63,7 +63,7 @@ class DatabaseHelper {
     await db.execute(createAppConfigTable);
 
     await db.execute(createMaterialesDescripcionIndex);
-    await db.execute(createProyectosDescripcionIndex);
+    await db.execute(createProyectosNombreIndex);
 
     await db.execute(createValesFechaIndex);
     await db.execute(createValesEstatusIndex);
@@ -74,9 +74,9 @@ class DatabaseHelper {
     await db.execute(createHistorialValeFechaIndex);
     await db.execute(createHistorialCompraFechaIndex);
 
-    await db.execute(createMaterialSyncIndex);
-    await db.execute(createProyectoSyncIndex);
-    await db.execute(createValeSyncIndex);
-    await db.execute(createCompraSyncIndex);
+    //await db.execute(createMaterialSyncIndex);
+    //await db.execute(createProyectoSyncIndex);
+    //await db.execute(createValeSyncIndex);
+    //await db.execute(createCompraSyncIndex);
   }
 }

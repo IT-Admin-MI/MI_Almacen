@@ -42,12 +42,18 @@ class AuthServiceImpl implements AuthService {
       usuarioFirebase.nombre,
     );
 
+    Usuario? usuarioSesion = usuarioLocal;
+
     if (usuarioLocal == null) {
 
       await usuarioRepository.insert(
         usuarioFirebase,
       );
 
+      usuarioSesion =
+      await usuarioRepository.getByNombre(
+        usuarioFirebase.nombre,
+      );
     } else {
 
       await usuarioRepository.update(
@@ -62,7 +68,6 @@ class AuthServiceImpl implements AuthService {
     }
 
     final sesion = SesionUsuario(
-      usuarioId: usuarioLocal?.id ?? 0,
       nombre: usuarioFirebase.nombre,
       rol: usuarioFirebase.rol,
     );
@@ -196,8 +201,17 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<Usuario?> usuarioActual() {
-    // TODO: implement usuarioActual
-    throw UnimplementedError();
+  Future<Usuario?> usuarioActual() async {
+
+    final sesion =
+    await obtenerSesion();
+
+    if (sesion == null) {
+      return null;
+    }
+
+    return usuarioRepository.getByNombre(
+      sesion.nombre,
+    );
   }
 }

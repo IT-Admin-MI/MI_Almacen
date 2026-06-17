@@ -3,9 +3,9 @@ CREATE INDEX idx_materiales_descripcion
 ON materiales(descripcion)
 ''';
 
-const createProyectosDescripcionIndex = '''
-CREATE INDEX idx_proyectos_descripcion
-ON proyectos(descripcion)
+const createProyectosNombreIndex = '''
+CREATE INDEX idx_proyectos_nombre
+ON proyectos(nombre)
 ''';
 
 const createValesFechaIndex = '''

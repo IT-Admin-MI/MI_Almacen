@@ -14,7 +14,7 @@ class FirebaseServiceImpl implements FirebaseService {
       String nombre,
       String password,
       ) async {
-
+    print('LOGIN FIREBASE INICIO');
     final result =
     await firestore
         .collection('usuarios')
@@ -28,18 +28,19 @@ class FirebaseServiceImpl implements FirebaseService {
     )
         .limit(1)
         .get();
-
+    print('DOCUMENTOS ENCONTRADOS: ${result.docs.length}');
     if (result.docs.isEmpty) {
+      print('USUARIO NO ENCONTRADO');
       return null;
     }
 
     final data =
     result.docs.first.data();
-
+    print('DATOS FIREBASE: $data');
     if (data['password'] != password) {
       return null;
     }
-
+    print('LOGIN CORRECTO');
     return Usuario(
       nombre: data['nombre'],
       password: data['password'],
@@ -56,18 +57,25 @@ class FirebaseServiceImpl implements FirebaseService {
         .collection('projects')
         .get();
 
+    print(
+      'PROYECTOS FIREBASE: ${result.docs.length}',
+    );
+
     return result.docs.map((doc) {
 
       final data = doc.data();
+      print(data);
 
       return Proyecto(
         clave: data['codigo'] ?? '',
-        descripcion:
+        nombre:
         data['nombre'] ?? '',
-        fecha_entrega:
-        DateTime.parse(
+        fechaEntrega:
+        data['fechaEntrega'] != null
+            ? DateTime.parse(
           data['fechaEntrega'],
-        ),
+        ) : null,
+        orden: data['orden'] ?? '',
       );
 
     }).toList();

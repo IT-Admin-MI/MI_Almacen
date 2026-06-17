@@ -11,9 +11,9 @@ CREATE TABLE usuarios(
 const String createProyectosTable = '''
 CREATE TABLE proyectos(
   clave TEXT PRIMARY KEY,
-  descripcion TEXT NOT NULL,
+  nombre TEXT NOT NULL,
   orden INTEGER NOT NULL,
-  fecha_entrega TEXT NOT NULL
+  fechaEntrega TEXT
 )
 ''';
 
@@ -22,7 +22,9 @@ CREATE TABLE materiales(
   codigo TEXT PRIMARY KEY,
   descripcion TEXT NOT NULL,
   existencia REAL NOT NULL,
-  tipo TEXT NOT NULL
+  tipo TEXT NOT NULL,
+  updated_at TEXT,
+  sync_status INTEGER DEFAULT 0
 )
 ''';
 

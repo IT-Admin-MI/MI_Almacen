@@ -27,7 +27,7 @@ class ProyectoRepositoryImpl
     final result =
     await db.query(
       'proyectos',
-      orderBy: 'descripcion',
+      orderBy: 'orden',
     );
 
     return result
@@ -110,10 +110,14 @@ class ProyectoRepositoryImpl
   @override
   Future<void> sincronizarFirebase() async {
 
+    print('SINCRONIZANDO FIREBASE');
     final proyectos =
     await firebaseService
         .obtenerProyectos();
 
+    print(
+      'PROYECTOS RECIBIDOS: ${proyectos.length}',
+    );
     for (final proyecto in proyectos) {
 
       final existente =

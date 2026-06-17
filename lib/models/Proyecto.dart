@@ -1,27 +1,46 @@
+import 'dart:ffi';
+
 class Proyecto {
   final String clave;
-  final String descripcion;
-  final DateTime fecha_entrega;
+  final String nombre;
+  final DateTime? fechaEntrega;
+  final int orden;
 
   Proyecto({
     required this.clave,
-    required this.descripcion,
-    required this.fecha_entrega,
+    required this.nombre,
+    this.fechaEntrega,
+    required this.orden,
   });
 
   Map<String, dynamic> toMap() {
+
     return {
       'clave': clave,
-      'descripcion': descripcion,
-      'fecha_entrega':fecha_entrega,
+      'nombre': nombre,
+      'orden': orden,
+
+      'fechaEntrega':
+      fechaEntrega
+          ?.toIso8601String(),
     };
   }
 
-  factory Proyecto.fromMap(Map<String, dynamic> map) {
+  factory Proyecto.fromMap(
+      Map<String, dynamic> map,
+      ) {
+
     return Proyecto(
       clave: map['clave'],
-      descripcion: map['descripcion'],
-      fecha_entrega: map['fecha_entrega'],
+      nombre: map['nombre'],
+      orden: map['orden'] ?? 0,
+
+      fechaEntrega:
+      map['fechaEntrega'] != null
+          ? DateTime.parse(
+        map['fechaEntrega'],
+      )
+          : null,
     );
   }
 
@@ -31,10 +50,11 @@ class Proyecto {
 
     return Proyecto(
       clave: data['codigo'] ?? '',
-      descripcion: data['nombre'] ?? '',
-      fecha_entrega: DateTime.parse(
+      nombre: data['nombre'] ?? '',
+      fechaEntrega: DateTime.parse(
         data['fechaEntrega'],
       ),
+      orden: data['orden'] ?? '',
     );
   }
 }
