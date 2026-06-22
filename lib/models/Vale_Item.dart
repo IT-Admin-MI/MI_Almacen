@@ -1,19 +1,20 @@
+import 'Material.dart';
+import 'Proyecto.dart';
+
 class ValeItem {
-  final int? id;
-  final int valeId;
-  final String materialClave;
-  final int proyectoId;
-  final double cantidad;
-  final String unidad;
-  final String comentario;
+
+  final Material material;
+
+  Proyecto? proyecto;
+
+  double cantidad;
+
+  String unidad;
 
   ValeItem({
-    this.id,
-    required this.valeId,
-    required this.materialClave,
-    required this.proyectoId,
-    required this.cantidad,
-    required this.unidad,
-    required this.comentario,
+    required this.material,
+    this.proyecto,
+    this.cantidad = 1,
+    this.unidad = 'pza',
   });
 }

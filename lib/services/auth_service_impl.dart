@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:mi_almacen/services/platform_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/Sesion.dart';
@@ -27,6 +28,9 @@ class AuthServiceImpl implements AuthService {
       String password,
       ) async {
 
+    print('======== LOGIN ========');
+    print('kIsWeb: ${PlatformService.esWeb}');
+    print('usaSQLite: ${PlatformService.usaSQLite}');
     final usuarioFirebase =
     await firebaseService.login(
       nombre,
@@ -37,39 +41,41 @@ class AuthServiceImpl implements AuthService {
       return false;
     }
 
-    final usuarioLocal =
-    await usuarioRepository.getByNombre(
-      usuarioFirebase.nombre,
-    );
-
-    Usuario? usuarioSesion = usuarioLocal;
-
-    if (usuarioLocal == null) {
-
-      await usuarioRepository.insert(
-        usuarioFirebase,
-      );
-
-      usuarioSesion =
+    print('esWeb=${PlatformService.esWeb}');
+    print('usaSQLite=${PlatformService.usaSQLite}');
+    if (PlatformService.usaSQLite) {
+      print('ENTRANDO A SQLITE');
+      final usuarioLocal =
       await usuarioRepository.getByNombre(
         usuarioFirebase.nombre,
       );
-    } else {
 
-      await usuarioRepository.update(
-        Usuario(
-          id: usuarioLocal.id,
-          nombre: usuarioFirebase.nombre,
-          password: usuarioFirebase.password,
-          descripcion: usuarioFirebase.descripcion,
-          rol: usuarioFirebase.rol,
-        ),
-      );
+      if (usuarioLocal == null) {
+
+        await usuarioRepository.insert(
+          usuarioFirebase,
+        );
+
+      } else {
+
+        await usuarioRepository.update(
+          Usuario(
+            id: usuarioLocal.id,
+            nombre: usuarioFirebase.nombre,
+            password: usuarioFirebase.password,
+            descripcion:
+            usuarioFirebase.descripcion,
+            rol: usuarioFirebase.rol,
+          ),
+        );
+      }
     }
 
     final sesion = SesionUsuario(
       nombre: usuarioFirebase.nombre,
       rol: usuarioFirebase.rol,
+      usuarioId:
+      usuarioFirebase.id ?? 0,
     );
 
     final prefs =
@@ -133,6 +139,16 @@ class AuthServiceImpl implements AuthService {
 
   @override
   Future<bool> validarSesion() async {
+
+    if (!PlatformService.usaSQLite) {
+
+      final sesion =
+      await obtenerSesion();
+
+      return sesion != null;
+    }
+
+    // flujo actual SQLite
 
     final prefs =
     await SharedPreferences.getInstance();
@@ -208,6 +224,17 @@ class AuthServiceImpl implements AuthService {
 
     if (sesion == null) {
       return null;
+    }
+
+    if (!PlatformService.usaSQLite) {
+
+      return Usuario(
+        id: sesion.usuarioId,
+        nombre: sesion.nombre,
+        password: '',
+        descripcion: '',
+        rol: sesion.rol,
+      );
     }
 
     return usuarioRepository.getByNombre(

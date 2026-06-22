@@ -1,39 +1,119 @@
+import 'package:mi_almacen/models/Vale_Item.dart';
+
 class Vale {
-  final int? id;
-  final String proyectoClave;
-  final DateTime fecha;
-  final String usuario;
-  final String estatus;
-  final String observaciones;
+
+  final String id;
+
+  final DateTime fechaCreacion;
+
+  final String usuarioNombre;
+
+  final int usuarioRol;
+
+  final int estado;
+
+  final DateTime? fechaValidacion;
+
+  final String? validadoPor;
+
+  final String? comentarioValidacion;
+
+  final int syncStatus;
+
+  final List<ValeItem> items;
 
   Vale({
-    this.id,
-    required this.proyectoClave,
-    required this.fecha,
-    required this.usuario,
-    required this.estatus,
-    required this.observaciones,
+    required this.id,
+    required this.fechaCreacion,
+    required this.usuarioNombre,
+    required this.usuarioRol,
+    required this.estado,
+    required this.items,
+    this.fechaValidacion,
+    this.validadoPor,
+    this.comentarioValidacion,
+    this.syncStatus = 0,
   });
 
   Map<String, dynamic> toMap() {
+
     return {
+
       'id': id,
-      'proyecto_clave': proyectoClave,
-      'fecha': fecha.toIso8601String(),
-      'usuario': usuario,
-      'estatus': estatus,
-      'observaciones': observaciones,
+
+      'fecha_creacion':
+      fechaCreacion.toIso8601String(),
+
+      'usuario_nombre':
+      usuarioNombre,
+
+      'usuario_rol':
+      usuarioRol,
+
+      'estado':
+      estado,
+
+      'fecha_validacion':
+      fechaValidacion?.toIso8601String(),
+
+      'validado_por':
+      validadoPor,
+
+      'comentario_validacion':
+      comentarioValidacion,
+
+      'sync_status':
+      syncStatus,
     };
   }
 
-  factory Vale.fromMap(Map<String, dynamic> map) {
+  factory Vale.fromMap(
+      Map<String, dynamic> map,
+      List<ValeItem> items,
+      ) {
+
     return Vale(
-      id: map['id'],
-      proyectoClave: map['proyecto_clave'],
-      fecha: DateTime.parse(map['fecha']),
-      usuario: map['usuario'],
-      estatus: map['estatus'],
-      observaciones: map['observaciones'],
+
+      id:
+      map['id'] as String,
+
+      fechaCreacion:
+      DateTime.parse(
+        map['fecha_creacion'] as String,
+      ),
+
+      usuarioNombre:
+      map['usuario_nombre'] as String,
+
+      usuarioRol:
+      map['usuario_rol'] as int,
+
+      estado:
+      map['estado'] as int,
+
+      items:
+      items,
+
+      fechaValidacion:
+      map['fecha_validacion'] != null
+          ? DateTime.parse(
+        map['fecha_validacion']
+        as String,
+      )
+          : null,
+
+      validadoPor:
+      map['validado_por']
+      as String?,
+
+      comentarioValidacion:
+      map['comentario_validacion']
+      as String?,
+
+      syncStatus:
+      map['sync_status']
+      as int? ??
+          0,
     );
   }
 }

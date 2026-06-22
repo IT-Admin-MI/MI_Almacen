@@ -119,23 +119,94 @@ class MaterialRepositoryImpl
       filePath,
     );
 
+    final db =
+    await databaseHelper.database;
+
+    final batch =
+    db.batch();
+
     for (final material in materiales) {
 
-      final existente =
-      await getByCodigo(
-        material.codigo,
+      batch.insert(
+        'materiales',
+        material.toMap(),
+        conflictAlgorithm:
+        ConflictAlgorithm.replace,
       );
-
-      if (existente == null) {
-
-        await insert(material);
-
-      } else {
-
-        await update(material);
-
-      }
     }
+
+    await batch.commit(
+      noResult: true,
+    );
   }
 
+  @override
+  Future<void> sincronizarDrive() async {
+
+    final materiales =
+    await excelService
+        .descargarEImportarMateriales();
+
+    print(
+      'MATERIALES LEIDOS DEL EXCEL: ${materiales.length}',
+    );
+
+    final db =
+    await databaseHelper.database;
+
+    final batch =
+    db.batch();
+
+    await db.delete(
+      'materiales',
+    );
+
+    for (final material in materiales) {
+
+      batch.insert(
+        'materiales',
+        material.toMap(),
+        conflictAlgorithm:
+        ConflictAlgorithm.replace,
+      );
+    }
+
+    await batch.commit(
+      noResult: true,
+    );
+
+
+  }
+
+  @override
+  Future<List<Material>> buscar(
+      String texto,
+      ) async {
+
+    final db =
+    await databaseHelper.database;
+
+    if (texto.trim().isEmpty) {
+      return [];
+    }
+
+    final result =
+    await db.query(
+      'materiales',
+      where:
+      'codigo LIKE ? OR descripcion LIKE ?',
+      whereArgs: [
+        '%$texto%',
+        '%$texto%',
+      ],
+      orderBy: 'descripcion',
+      limit: 50,
+    );
+
+    return result
+        .map(
+          (e) => Material.fromMap(e),
+    )
+        .toList();
+  }
 }

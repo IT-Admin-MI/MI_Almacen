@@ -6,7 +6,7 @@ class Usuario {
   final int rol;
 
   Usuario({
-    this.id,
+    required this.id,
     required this.nombre,
     required this.password,
     required this.descripcion,

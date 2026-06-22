@@ -2,6 +2,7 @@ import '../database/database_helper.dart';
 import '../models/Usuario.dart';
 import 'usuario_repository.dart';
 
+
 class UsuarioRepositoryImpl implements UsuarioRepository {
 
   final DatabaseHelper databaseHelper;

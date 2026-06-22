@@ -4,4 +4,6 @@ abstract class SyncService {
 
   Future<void> sincronizarProyectos();
 
+  Future<void> sincronizarMateriales();
+
 }

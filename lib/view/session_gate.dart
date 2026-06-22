@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
 import 'package:mi_almacen/viewmodels/login_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
 
 import '../services/auth_service.dart';
 import 'home/home_page.dart';
@@ -11,12 +12,14 @@ class SessionGate extends StatefulWidget {
   final AuthService authService;
   final LoginViewModel loginViewModel;
   final ProyectoRepository proyectoRepository;
+  final ValeViewModel valeViewModel;
 
   const SessionGate({
     super.key,
     required this.authService,
     required this.loginViewModel,
     required this.proyectoRepository,
+    required this.valeViewModel,
   });
 
   @override
@@ -56,6 +59,8 @@ class _SessionGateState
     setState(() {
       autorizado = valida;
     });
+
+
   }
   @override
   Widget build(BuildContext context) {
@@ -72,11 +77,9 @@ class _SessionGateState
     if (autorizado!) {
 
       return HomePage(
-        authService:
-        widget.authService,
-
-        proyectoRepository:
-        widget.proyectoRepository,
+        authService: widget.authService,
+        proyectoRepository: widget.proyectoRepository,
+        valeViewModel: widget.valeViewModel,
       );
 
     }

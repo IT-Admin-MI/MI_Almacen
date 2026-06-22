@@ -8,4 +8,5 @@ abstract class ExcelService {
       String filePath,
       );
 
+  Future<List<Material>> descargarEImportarMateriales();
 }

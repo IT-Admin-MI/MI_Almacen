@@ -21,4 +21,6 @@ abstract class ProyectoRepository {
       );
 
   Future<void> sincronizarFirebase();
+
+
 }

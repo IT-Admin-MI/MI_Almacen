@@ -1,11 +1,45 @@
 import 'dart:io';
 
-import 'package:mi_almacen/models/Material.dart';
-import 'package:mi_almacen/services/excel_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 
-
+import '../models/Material.dart';
+import 'excel_service.dart';
 class ExcelServiceImpl implements ExcelService {
+
+  static const String excelUrl =
+      'https://drive.google.com/uc?export=download&id=1dzVB5Wagj0_JXqptDM2oEU11O71DayU5';
+
+  @override
+  Future<List<Material>> descargarEImportarMateriales() async {
+
+    final response =
+    await http.get(
+      Uri.parse(excelUrl),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'No se pudo descargar el Excel',
+      );
+    }
+
+    final tempDir =
+    await getTemporaryDirectory();
+
+    final file = File(
+      '${tempDir.path}/materiales.xlsx',
+    );
+
+    await file.writeAsBytes(
+      response.bodyBytes,
+    );
+
+    return importarMateriales(
+      file.path,
+    );
+  }
 
   @override
   Future<List<Material>> importarMateriales(
@@ -37,10 +71,10 @@ class ExcelServiceImpl implements ExcelService {
 
       if (row.isEmpty) continue;
 
-      final clave =
+      final codigo =
           row[0]?.toString().trim() ?? '';
 
-      if (clave.isEmpty) continue;
+      if (codigo.isEmpty) continue;
 
       final descripcion =
           row[1]?.toString().trim() ?? '';
@@ -53,7 +87,7 @@ class ExcelServiceImpl implements ExcelService {
 
       materiales.add(
         Material(
-          codigo: clave,
+          codigo: codigo,
           descripcion: descripcion,
           tipo: tipo,
           existencia: existencia,
@@ -66,17 +100,18 @@ class ExcelServiceImpl implements ExcelService {
     return materiales;
   }
 
-  double _toDouble(dynamic value) {
+  double _toDouble(
+      dynamic value,
+      ) {
 
     if (value == null) {
       return 0;
     }
 
     return double.tryParse(
-      value.toString().replaceAll(',', '.'),
+      value.toString()
+          .replaceAll(',', '.'),
     ) ??
         0;
   }
-
-
 }

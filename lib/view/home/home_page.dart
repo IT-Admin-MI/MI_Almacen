@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/services/firebase_service_impl.dart';
+import 'package:mi_almacen/view/vales/vales_page.dart';
+import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
 
 import '../../models/Proyecto.dart';
 import '../../models/Usuario.dart';
-
+import '../vales/vales_aprobacion_page.dart';
 import '../../repositories/proyecto_repository.dart';
 
 import '../../services/auth_service.dart';
@@ -13,19 +17,37 @@ class HomePage extends StatefulWidget {
 
   final ProyectoRepository proyectoRepository;
 
+  final ValeViewModel valeViewModel;
+
+
   const HomePage({
     super.key,
     required this.authService,
     required this.proyectoRepository,
+    required this.valeViewModel,
   });
 
   @override
   State<HomePage> createState() =>
       _HomePageState();
 }
-
 class _HomePageState
     extends State<HomePage> {
+
+  bool get esAdmin =>
+      usuario?.rol == 0;
+
+  bool get esSupervisor =>
+      usuario?.rol == 1;
+
+  bool get esComprador =>
+      usuario?.rol == 2;
+
+  bool get esAlmacenista =>
+      usuario?.rol == 3;
+
+  bool get esEmpleado =>
+      usuario?.rol == 4;
 
   Usuario? usuario;
 
@@ -269,21 +291,60 @@ class _HomePageState
                 children: [
 
                   ListTile(
-
-                    leading: const Icon(
-                      Icons.task,
-                    ),
-
-                    title: const Text(
-                      'Proyectos',
-                    ),
-
+                    leading: const Icon(Icons.task),
+                    title: const Text('Proyectos'),
                     onTap: () {
-                      Navigator.pop(
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.receipt_long),
+                    title: const Text('Crear Vale'),
+                    onTap: () {
+
+                      Navigator.pop(context);
+
+                      Navigator.push(
                         context,
+                        MaterialPageRoute(
+                          builder: (_) => ValesPage(
+                            viewModel: widget.valeViewModel,
+                          ),
+                        ),
                       );
                     },
                   ),
+
+                  if (usuario != null &&
+                      (usuario!.rol == 0 ||
+                          usuario!.rol == 1))
+
+                    ListTile(
+                      leading: const Icon(
+                        Icons.fact_check,
+                      ),
+
+                      title: const Text(
+                        'Aprobación de Vales',
+                      ),
+
+                      onTap: () {
+
+                        Navigator.pop(context);
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AprobacionValesPage(
+                              viewModel: AprobacionValesViewModel(
+                                firebaseService: FirebaseServiceImpl(),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),

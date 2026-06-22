@@ -10,12 +10,12 @@ ON proyectos(nombre)
 
 const createValesFechaIndex = '''
 CREATE INDEX idx_vales_fecha
-ON vales(fecha)
+ON vales(fecha_creacion)
 ''';
 
 const createValesEstatusIndex = '''
-CREATE INDEX idx_vales_estatus
-ON vales(estatus)
+CREATE INDEX idx_vales_estado
+ON vales(estado)
 ''';
 
 const createComprasEstadoIndex = '''

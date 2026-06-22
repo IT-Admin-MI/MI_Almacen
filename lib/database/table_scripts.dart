@@ -30,44 +30,42 @@ CREATE TABLE materiales(
 
 const String createValesTable = '''
 CREATE TABLE vales(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  proyecto_clave TEXT NOT NULL,
-  fecha TEXT NOT NULL,
-  usuario TEXT NOT NULL,
-  estatus TEXT NOT NULL,
-  observaciones TEXT
-)
+    id TEXT PRIMARY KEY,
+    fecha_creacion TEXT NOT NULL,
+    usuario_nombre TEXT NOT NULL,
+    usuario_rol INTEGER NOT NULL,
+    estado INTEGER NOT NULL,
+    fecha_validacion TEXT,
+    validado_por TEXT,
+    comentario_validacion TEXT,
+    sync_status INTEGER NOT NULL
+);
 ''';
 
 const String createValeItemsTable = '''
 CREATE TABLE vale_items(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  vale_id INTEGER NOT NULL,
-  material_codigo TEXT NOT NULL,
-  proyecto_clave TEXT NOT NULL,
-  cantidad REAL NOT NULL,
-  unidad TEXT NOT NULL,
-  comentario TEXT,
-
-  FOREIGN KEY(vale_id) REFERENCES vales(id),
-  FOREIGN KEY(material_codigo) REFERENCES materiales(codigo),
-  FOREIGN KEY(proyecto_clave) REFERENCES proyectos(clave)
-)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vale_id TEXT NOT NULL,
+    material_codigo TEXT NOT NULL,
+    material_descripcion TEXT NOT NULL,
+    proyecto_clave TEXT,
+    proyecto_nombre TEXT,
+    cantidad REAL NOT NULL,
+    unidad TEXT NOT NULL
+);
 ''';
 
 const String createHistorialValesTable = '''
 CREATE TABLE historial_vales(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  vale_id INTEGER NOT NULL,
-  fecha TEXT NOT NULL,
-  usuario_id INTEGER NOT NULL,
-  accion TEXT NOT NULL,
-  estado_anterior TEXT,
-  estado_nuevo TEXT,
-  comentario TEXT,
-
-  FOREIGN KEY(vale_id) REFERENCES vales(id)
-)
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vale_id TEXT NOT NULL,
+    fecha TEXT NOT NULL,
+    usuario_nombre TEXT NOT NULL,
+    accion TEXT NOT NULL,
+    estado_anterior TEXT,
+    estado_nuevo TEXT,
+    comentario TEXT
+);
 ''';
 
 const createHistorialComprasTable = '''

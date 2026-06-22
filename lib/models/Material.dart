@@ -9,7 +9,7 @@ class Material {
 
   final DateTime? updatedAt;
 
-  final int syncStatus;
+  final int? syncStatus;
 
   Material({
     required this.codigo,

@@ -24,4 +24,8 @@ abstract class MaterialRepository {
       String filePath,
       );
 
+  Future<void> sincronizarDrive();
+
+  Future<List<Material>>
+  buscar(String texto);
 }
