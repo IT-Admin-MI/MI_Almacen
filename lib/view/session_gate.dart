@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/login_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
 
@@ -13,6 +14,7 @@ class SessionGate extends StatefulWidget {
   final LoginViewModel loginViewModel;
   final ProyectoRepository proyectoRepository;
   final ValeViewModel valeViewModel;
+  final AprobacionValesViewModel aprobacionValesViewModel;
 
   const SessionGate({
     super.key,
@@ -20,6 +22,7 @@ class SessionGate extends StatefulWidget {
     required this.loginViewModel,
     required this.proyectoRepository,
     required this.valeViewModel,
+    required this.aprobacionValesViewModel,
   });
 
   @override
@@ -80,6 +83,7 @@ class _SessionGateState
         authService: widget.authService,
         proyectoRepository: widget.proyectoRepository,
         valeViewModel: widget.valeViewModel,
+        aprobacionValesViewModel: widget.aprobacionValesViewModel,
       );
 
     }

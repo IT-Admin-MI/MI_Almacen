@@ -1,3 +1,5 @@
+import 'package:mi_almacen/models/Vale.dart';
+
 abstract class ValeService {
 
   Future<void> aprobarVale(
@@ -13,5 +15,7 @@ abstract class ValeService {
       String usuarioNombre,
       String comentario,
       );
+
+  Future<void> actualizarVale(Vale vale);
 
 }

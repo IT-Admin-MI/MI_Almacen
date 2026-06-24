@@ -4,6 +4,7 @@ class Usuario {
   final String password;
   final String descripcion;
   final int rol;
+  final String departamento;
 
   Usuario({
     required this.id,
@@ -11,6 +12,7 @@ class Usuario {
     required this.password,
     required this.descripcion,
     required this.rol,
+    required this.departamento,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,10 +28,11 @@ class Usuario {
   factory Usuario.fromMap(Map<String, dynamic> map) {
     return Usuario(
       id: map['id'],
-      nombre: map['nombre'],
-      password: map['password'],
-      descripcion: map['descripcion'],
-      rol: map['rol'],
+      nombre: map['nombre'] ?? '',
+      password: map['password']?? '',
+      descripcion: map['descripcion']?? '',
+      rol: map['rol']?? '',
+      departamento: map['departamento']?? '',
     );
   }
 }

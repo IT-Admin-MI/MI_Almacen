@@ -66,6 +66,7 @@ class AuthServiceImpl implements AuthService {
             descripcion:
             usuarioFirebase.descripcion,
             rol: usuarioFirebase.rol,
+            departamento: usuarioFirebase.departamento,
           ),
         );
       }
@@ -74,8 +75,8 @@ class AuthServiceImpl implements AuthService {
     final sesion = SesionUsuario(
       nombre: usuarioFirebase.nombre,
       rol: usuarioFirebase.rol,
-      usuarioId:
-      usuarioFirebase.id ?? 0,
+      usuarioId: usuarioFirebase.id ?? 0,
+      departamento: usuarioFirebase.departamento,
     );
 
     final prefs =
@@ -123,6 +124,10 @@ class AuthServiceImpl implements AuthService {
     final prefs =
     await SharedPreferences.getInstance();
 
+
+
+
+
     final json =
     prefs.getString(
       sessionKey,
@@ -144,6 +149,14 @@ class AuthServiceImpl implements AuthService {
 
       final sesion =
       await obtenerSesion();
+
+
+      print(
+        'SESSION READ => '
+            'nombre=${sesion?.nombre} '
+            'rol=${sesion?.rol} '
+            'departamento=${sesion?.departamento}',
+      );
 
       return sesion != null;
     }
@@ -234,6 +247,7 @@ class AuthServiceImpl implements AuthService {
         password: '',
         descripcion: '',
         rol: sesion.rol,
+        departamento: sesion.departamento,
       );
     }
 

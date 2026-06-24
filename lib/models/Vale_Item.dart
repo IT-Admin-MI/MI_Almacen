@@ -18,3 +18,4 @@ class ValeItem {
     this.unidad = 'pza',
   });
 }
+

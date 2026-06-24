@@ -20,6 +20,8 @@ class Vale {
 
   final int syncStatus;
 
+  final String? departamento;
+
   final List<ValeItem> items;
 
   Vale({
@@ -29,6 +31,7 @@ class Vale {
     required this.usuarioRol,
     required this.estado,
     required this.items,
+    required this.departamento,
     this.fechaValidacion,
     this.validadoPor,
     this.comentarioValidacion,
@@ -84,6 +87,9 @@ class Vale {
 
       usuarioNombre:
       map['usuario_nombre'] as String,
+
+      departamento:
+      map['departamento'] as String,
 
       usuarioRol:
       map['usuario_rol'] as int,

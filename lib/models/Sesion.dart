@@ -6,10 +6,13 @@ class SesionUsuario {
 
   final int rol;
 
+  final departamento;
+
   SesionUsuario({
     this.usuarioId,
     required this.nombre,
     required this.rol,
+    required this.departamento,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +34,7 @@ class SesionUsuario {
       rol: int.parse(
         map['rol'].toString(),
       ),
+      departamento: map['departamento'],
     );
   }
 }

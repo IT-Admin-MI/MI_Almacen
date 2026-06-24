@@ -19,12 +19,15 @@ class HomePage extends StatefulWidget {
 
   final ValeViewModel valeViewModel;
 
+  final AprobacionValesViewModel aprobacionValesViewModel;
+
 
   const HomePage({
     super.key,
     required this.authService,
     required this.proyectoRepository,
     required this.valeViewModel,
+    required  this.aprobacionValesViewModel,
   });
 
   @override
@@ -68,6 +71,13 @@ class _HomePageState
     final resultado =
     await widget.authService
         .usuarioActual();
+
+    print(
+      'HOME USER => '
+          'nombre=${resultado?.nombre} '
+          'rol=${resultado?.rol} '
+          'departamento=${resultado?.departamento}',
+    );
 
     if (!mounted) return;
 
@@ -337,9 +347,7 @@ class _HomePageState
                           context,
                           MaterialPageRoute(
                             builder: (_) => AprobacionValesPage(
-                              viewModel: AprobacionValesViewModel(
-                                firebaseService: FirebaseServiceImpl(),
-                              ),
+                              viewModel: widget.aprobacionValesViewModel,
                             ),
                           ),
                         );

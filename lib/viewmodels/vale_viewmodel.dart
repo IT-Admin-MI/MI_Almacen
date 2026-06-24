@@ -178,6 +178,8 @@ class ValeViewModel extends ChangeNotifier {
       vale.usuarioNombre,
       usuarioRol:
       vale.usuarioRol,
+      departamento:
+      vale.departamento,
       estado: 1,
       items: vale.items,
       fechaValidacion:
@@ -203,6 +205,8 @@ class ValeViewModel extends ChangeNotifier {
       vale.fechaCreacion,
       usuarioNombre:
       vale.usuarioNombre,
+      departamento:
+      vale.departamento,
       usuarioRol:
       vale.usuarioRol,
       estado: 2,
@@ -418,6 +422,8 @@ class ValeViewModel extends ChangeNotifier {
         usuarioRol:
         sesion.rol,
 
+        departamento:
+        sesion.departamento,
         fechaCreacion:
         DateTime.now(),
 

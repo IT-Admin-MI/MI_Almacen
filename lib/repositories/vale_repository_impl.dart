@@ -53,6 +53,7 @@ class ValeRepositoryImpl
           },
         );
       }
+
     });
   }
 
@@ -180,6 +181,21 @@ class ValeRepositoryImpl
     }
 
     return lista;
+  }
+
+  Future<void> updateEstado(String valeId, int estado) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'vales',
+      {
+        'estado': estado,
+        'sync_status': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [valeId],
+    );
   }
 
   Future<List<Vale>> getPendientesFirebase() {
@@ -317,6 +333,8 @@ class ValeRepositoryImpl
       whereArgs: [valeMap['id']],
     );
 
+    print('VALE ID: ${valeMap['id']}');
+    print('ITEMS EN BD: $itemsResult');
     final items =
     itemsResult.map((item) {
 

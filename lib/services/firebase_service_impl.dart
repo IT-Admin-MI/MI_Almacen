@@ -50,6 +50,7 @@ class FirebaseServiceImpl implements FirebaseService {
       descripcion: data['descripcion'],
       rol: data['rol'],
       id: null,
+      departamento: data['departamento'],
     );
   }
 
@@ -158,50 +159,60 @@ class FirebaseServiceImpl implements FirebaseService {
 
       print('VALE FIREBASE: $data');
 
+      final itemsSnapshot =
+      await doc.reference
+          .collection('items')
+          .get();
+
+      print(
+        'VALE ${doc.id} -> ITEMS EN FIREBASE: ${itemsSnapshot.docs.length}',
+      );
+
+      for (final item in itemsSnapshot.docs) {
+        print(item.data());
+      }
+
       final items = <ValeItem>[];
 
-      if (data['items'] != null) {
+      for (final itemDoc in itemsSnapshot.docs) {
 
-        for (final item in data['items']) {
+        try {
 
-          items.add(
+          final item = itemDoc.data();
 
-            ValeItem(
+          final valeItem = ValeItem(
 
-              material: Material(
-                codigo:
-                item['materialCodigo'] ?? '',
-                descripcion:
-                item['materialDescripcion'] ?? '',
-                existencia: 0,
-                tipo: '',
-                updatedAt: null,
-                syncStatus: 0,
-              ),
-
-              proyecto:
-              item['proyectoClave'] != null
-
-                  ? Proyecto(
-                clave:
-                item['proyectoClave'],
-                nombre:
-                item['proyectoNombre'] ?? '',
-                orden: 0,
-              )
-
-                  : null,
-
-              cantidad:
-              (item['cantidad'] as num)
-                  .toDouble(),
-
-              unidad:
-              item['unidad'] ?? '',
+            material: Material(
+              codigo: item['material_codigo'].toString(),
+              descripcion: item['material_descripcion'].toString(),
+              existencia: 0,
+              tipo: '',
+              updatedAt: null,
+              syncStatus: 0,
             ),
+
+            proyecto: item['proyecto_clave'] != null
+                ? Proyecto(
+              clave: item['proyecto_clave'].toString(),
+              nombre: item['proyecto_nombre'].toString(),
+              orden: 0,
+            )
+                : null,
+
+            cantidad: (item['cantidad'] as num).toDouble(),
+
+            unidad: item['unidad'].toString(),
           );
+
+          items.add(valeItem);
+
+        } catch (e) {
+          print('ERROR ITEM: $e');
         }
       }
+      print(
+        'VALE ${data['id']} ITEMS CARGADOS: ${items.length}',
+      );
 
       lista.add(
 
@@ -216,6 +227,9 @@ class FirebaseServiceImpl implements FirebaseService {
 
           usuarioNombre:
           data['usuario_nombre'] ?? '',
+
+          departamento:
+          data['departamento'] ?? '',
 
           usuarioRol:
           data['usuario_rol'] ?? 0,
@@ -242,8 +256,28 @@ class FirebaseServiceImpl implements FirebaseService {
           items: items,
         ),
       );
+
+      print(
+        'VALE AGREGADO A LISTA: ${lista.last.items.length}',
+      );
     }
 
     return lista;
+  }
+
+  @override
+  Future<void> actualizarEstadoVale({
+    required String id,
+    required int estado,
+    required String? comentario,
+    required String? validadoPor,
+  }) async {
+
+    await firestore.collection('vales').doc(id).update({
+      'estado': estado,
+      'comentario_validacion': comentario,
+      'validado_por': validadoPor,
+      'fecha_validacion': DateTime.now().toIso8601String(),
+    });
   }
 }

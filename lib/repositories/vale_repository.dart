@@ -28,5 +28,7 @@ abstract class ValeRepository {
       String valeId,
       );
 
+  Future<void> updateEstado(String valeId, int i) async {}
+
 
 }

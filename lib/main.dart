@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mi_almacen/services/vale_service_impl.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 
 import 'firebase_options.dart';
@@ -55,57 +56,50 @@ class MyApp extends StatelessWidget {
     super.key,
   });
 
+
+
   @override
   Widget build(BuildContext context) {
+
+    final databaseHelper = DatabaseHelper.instance;
+    final firebaseService = FirebaseServiceImpl();
 
     // ==========================
     // CORE
     // ==========================
 
-    final databaseHelper =
-        DatabaseHelper.instance;
-
-    final firebaseService =
-    FirebaseServiceImpl();
-
-    final aprobacionValesViewModel =
-    AprobacionValesViewModel(
-      firebaseService: firebaseService,
-    );
-
-    // ==========================
-    // REPOSITORIES
-    // ==========================
-
-    final usuarioRepository =
-    UsuarioRepositoryImpl(
+    final usuarioRepository = UsuarioRepositoryImpl(
       databaseHelper: databaseHelper,
     );
 
-    final proyectoRepository =
-    ProyectoRepositoryImpl(
+    final proyectoRepository = ProyectoRepositoryImpl(
       databaseHelper: databaseHelper,
       firebaseService: firebaseService,
     );
 
-    final excelService =
-    ExcelServiceImpl();
+    final excelService = ExcelServiceImpl();
 
-    final materialRepository =
-    MaterialRepositoryImpl(
+    final materialRepository = MaterialRepositoryImpl(
       databaseHelper: databaseHelper,
       excelService: excelService,
     );
 
-    final valeRepository =
-    ValeRepositoryImpl(
+    final valeRepository = ValeRepositoryImpl(
       databaseHelper: databaseHelper,
     );
 
-    final historialValeRepository =
-    HistorialValeRepositoryImpl(
+
+
+    final historialValeRepository = HistorialValeRepositoryImpl(
       databaseHelper: databaseHelper,
     );
+
+    final valeService = ValeServiceImpl(
+      valeRepository: valeRepository,
+      databaseHelper: databaseHelper,
+      firebaseService: firebaseService,
+    );
+
 
     // ==========================
     // SERVICES
@@ -126,6 +120,15 @@ class MyApp extends StatelessWidget {
     // ==========================
     // VIEWMODELS
     // ==========================
+
+
+    final aprobacionValesViewModel =
+    AprobacionValesViewModel(
+      firebaseService: firebaseService,
+      valeService: valeService,
+      authService: authService,
+      proyectoRepository: proyectoRepository,
+    );
 
     final loginViewModel =
     LoginViewModel(
@@ -168,6 +171,7 @@ class MyApp extends StatelessWidget {
         loginViewModel: loginViewModel,
         proyectoRepository: proyectoRepository,
         valeViewModel: valeViewModel,
+        aprobacionValesViewModel: aprobacionValesViewModel,
       ),
 
       routes: {
@@ -180,14 +184,10 @@ class MyApp extends StatelessWidget {
 
         '/home': (context) =>
             HomePage(
-              authService:
-              authService,
-
-              proyectoRepository:
-              proyectoRepository,
-
-              valeViewModel:
-              valeViewModel,
+              authService: authService,
+              proyectoRepository: proyectoRepository,
+              valeViewModel: valeViewModel,
+              aprobacionValesViewModel: aprobacionValesViewModel,
             ),
       },
     );
