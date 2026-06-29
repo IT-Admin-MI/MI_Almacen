@@ -30,7 +30,7 @@ class LoginViewModel
     notifyListeners();
 
     try {
-
+      print("Usuario Login: "+usuario+" Contraseña Login: "+password);
       final ok =
       await authService.login(
         usuario,

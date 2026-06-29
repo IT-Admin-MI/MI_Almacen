@@ -21,6 +21,7 @@ class Usuario {
       'nombre': nombre,
       'password': password,
       'descripcion': descripcion,
+      'departamento': departamento,
       'rol': rol,
     };
   }
@@ -31,7 +32,7 @@ class Usuario {
       nombre: map['nombre'] ?? '',
       password: map['password']?? '',
       descripcion: map['descripcion']?? '',
-      rol: map['rol']?? '',
+      rol: map['rol'] ?? -1,
       departamento: map['departamento']?? '',
     );
   }

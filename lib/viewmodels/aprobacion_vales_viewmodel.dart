@@ -43,17 +43,47 @@ class AprobacionValesViewModel
       );
 
   Future<void> cargarVales() async {
+
     _cargando = true;
     notifyListeners();
 
     try {
-      _vales = await firebaseService.obtenerValesPendientes();
-      await cargarProyectos(); //
+
+      final usuario = await authService.usuarioActual();
+
+      final todosLosVales =
+      await firebaseService.obtenerValesPendientes();
+
+      if (usuario == null) {
+
+        _vales = [];
+
+      } else if (usuario.rol == 1) {
+
+        // Supervisor: únicamente su departamento
+        _vales = todosLosVales.where((vale) {
+
+          return vale.departamento == usuario.departamento;
+
+        }).toList();
+
+      } else {
+
+        // Admin, Compras y Almacenista
+        _vales = todosLosVales;
+
+      }
+
+      await cargarProyectos();
+
     } finally {
+
       _cargando = false;
       notifyListeners();
+
     }
   }
+
   Future<void> cargarProyectos() async {
     _proyectos = await proyectoRepository.getAll();
     notifyListeners();

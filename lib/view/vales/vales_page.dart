@@ -72,94 +72,97 @@ class _ValesPageState
       ),
 
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // =====================
-                // BOTONES SYNC
-                // =====================
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          await viewModel.sincronizarMateriales();
-                        },
-                        icon: const Icon(Icons.download),
-                        label: const Text('Materiales'),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: viewModel.cargandoProyectos
-                            ? null
-                            : () async {
-                          await viewModel.sincronizarProyectos();
-                        },
-                        icon: const Icon(Icons.download),
-                        label: const Text('Proyectos'),
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 16),
+          // ── ÁREA SUPERIOR ──────────────────────────────
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.42,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
 
-                // =====================
-                // BUSCADOR
-                // =====================
-                TextField(
-                  controller: buscadorController,
-                  decoration: const InputDecoration(
-                    labelText: 'Buscar material',
-                    hintText: 'Código o descripción',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: viewModel.buscarMaterial,
-                ),
-
-                const SizedBox(height: 10),
-
-                // =====================
-                // RESULTADOS BÚSQUEDA
-                // =====================
-                if (viewModel.resultadosBusqueda.isNotEmpty)
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 200), // reducido
-                    decoration: BoxDecoration(
-                      border: Border.all(),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: viewModel.resultadosBusqueda.length,
-                      itemBuilder: (context, index) {
-                        final material = viewModel.resultadosBusqueda[index];
-                        return ListTile(
-                          title: Text(material.descripcion),
-                          subtitle: Text(material.codigo),
-                          trailing: Text(material.existencia.toString()),
-                          onTap: () {
-                            viewModel.agregarMaterial(material);
-                            buscadorController.clear();
+                  // BOTONES SYNC
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await viewModel.sincronizarMateriales();
                           },
-                        );
-                      },
-                    ),
+                          icon: const Icon(Icons.download),
+                          label: const Text('Materiales'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: viewModel.cargandoProyectos
+                              ? null
+                              : () async {
+                            await viewModel.sincronizarProyectos();
+                          },
+                          icon: const Icon(Icons.download),
+                          label: const Text('Proyectos'),
+                        ),
+                      ),
+                    ],
                   ),
 
-                const SizedBox(height: 10),
-              ],
+                  const SizedBox(height: 16),
+
+                  // BUSCADOR
+                  TextField(
+                    controller: buscadorController,
+                    decoration: const InputDecoration(
+                      labelText: 'Buscar material',
+                      hintText: 'Código o descripción',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: viewModel.buscarMaterial,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // RESULTADOS BÚSQUEDA
+                  if (viewModel.resultadosBusqueda.isNotEmpty)
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.20,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListView.builder(
+                          itemCount: viewModel.resultadosBusqueda.length,
+                          itemBuilder: (context, index) {
+                            final material = viewModel.resultadosBusqueda[index];
+                            return ListTile(
+                              title: Text(material.descripcion),
+                              subtitle: Text(material.codigo),
+                              trailing: Text(material.existencia.toString()),
+                              onTap: () {
+                                viewModel.agregarMaterial(material);
+                                buscadorController.clear();
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+                ],
+              ),
             ),
           ),
 
-          // =====================
-          // LISTA VALE ITEMS  ← fuera del Padding interior, en el Column raíz
-          // =====================
+          // ── LISTA VALE ITEMS ───────────────────────────
           Expanded(
             child: viewModel.items.isEmpty
                 ? const Center(child: Text('Sin materiales agregados'))
@@ -172,51 +175,32 @@ class _ValesPageState
             ),
           ),
 
-          // =====================
-          // BOTÓN CREAR VALE
-          // =====================
-          Padding(
+          // ── BOTÓN CREAR VALE ───────────────────────────
+        SafeArea(
+            top: false,
+          child: Padding(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: viewModel.puedeCrearVale &&
-                    !viewModel.creandoVale
+                onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
                     ? () async {
-
-                  final resultado =
-                  await viewModel.crearVale();
-
+                  final resultado = await viewModel.crearVale();
                   if (!mounted) return;
-
-                  if (resultado) {
-
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Vale creado correctamente',
-                        ),
-                      ),
-                    );
-
-                  } else {
-
-                    ScaffoldMessenger.of(context)
-                        .showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Error al crear el vale',
-                        ),
-                      ),
-                    );
-                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(resultado
+                          ? 'Vale creado correctamente'
+                          : 'Error al crear el vale'),
+                    ),
+                  );
                 }
                     : null,
                 child: const Text('Crear Vale'),
               ),
             ),
           ),
+         ),
         ],
       ),
     );

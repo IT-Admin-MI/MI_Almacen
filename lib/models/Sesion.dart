@@ -20,6 +20,7 @@ class SesionUsuario {
     return {
       'usuarioId': usuarioId,
       'nombre': nombre,
+      'departamento': departamento,
       'rol': rol,
     };
   }
@@ -31,10 +32,10 @@ class SesionUsuario {
     return SesionUsuario(
       usuarioId: map['usuarioId'],
       nombre: map['nombre'],
+      departamento: map['departamento'],
       rol: int.parse(
         map['rol'].toString(),
       ),
-      departamento: map['departamento'],
     );
   }
 }

@@ -3,6 +3,7 @@ CREATE TABLE usuarios(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   password TEXT NOT NULL,
+  departamento TEXT NOT NULL,
   descripcion TEXT NOT NULL,
   rol INTEGER NOT NULL
 )
@@ -35,6 +36,7 @@ CREATE TABLE vales(
     usuario_nombre TEXT NOT NULL,
     usuario_rol INTEGER NOT NULL,
     estado INTEGER NOT NULL,
+    departamento TEXT NOT NULL,
     fecha_validacion TEXT,
     validado_por TEXT,
     comentario_validacion TEXT,

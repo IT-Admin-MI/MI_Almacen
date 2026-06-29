@@ -399,6 +399,8 @@ class ValeViewModel extends ChangeNotifier {
 
     try {
 
+
+
       _creandoVale = true;
 
       notifyListeners();
@@ -406,6 +408,12 @@ class ValeViewModel extends ChangeNotifier {
       final sesion =
       await authService
           .obtenerSesion();
+
+
+      print('===== SESION =====');
+      print('Nombre: ${sesion?.nombre}');
+      print('Rol: ${sesion?.rol}');
+      print('Departamento: "${sesion?.departamento}"');
 
       if (sesion == null) {
         throw Exception(

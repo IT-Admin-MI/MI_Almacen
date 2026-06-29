@@ -43,30 +43,15 @@ class Vale {
     return {
 
       'id': id,
-
-      'fecha_creacion':
-      fechaCreacion.toIso8601String(),
-
-      'usuario_nombre':
-      usuarioNombre,
-
-      'usuario_rol':
-      usuarioRol,
-
-      'estado':
-      estado,
-
-      'fecha_validacion':
-      fechaValidacion?.toIso8601String(),
-
-      'validado_por':
-      validadoPor,
-
-      'comentario_validacion':
-      comentarioValidacion,
-
-      'sync_status':
-      syncStatus,
+      'fecha_creacion': fechaCreacion.toIso8601String(),
+      'usuario_nombre': usuarioNombre,
+      'usuario_rol': usuarioRol,
+      'estado': estado,
+      'departamento': departamento,
+      'fecha_validacion': fechaValidacion?.toIso8601String(),
+      'validado_por': validadoPor,
+      'comentario_validacion': comentarioValidacion,
+      'sync_status': syncStatus,
     };
   }
 
