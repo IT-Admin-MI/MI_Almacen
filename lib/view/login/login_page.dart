@@ -1,143 +1,167 @@
 import 'package:flutter/material.dart';
-
 import '../../viewmodels/login_viewmodel.dart';
 
 class LoginPage extends StatefulWidget {
   final LoginViewModel viewModel;
 
-  const LoginPage({
-    super.key,
-    required this.viewModel,
-  });
+  const LoginPage({super.key, required this.viewModel});
 
   @override
-  State<LoginPage> createState() =>
-      _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState
-    extends State<LoginPage> {
-
-  final _usuarioController =
-  TextEditingController();
-
-  final _passwordController =
-  TextEditingController();
+class _LoginPageState extends State<LoginPage> {
+  final _usuarioController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _verPassword = false;
 
   @override
   void initState() {
     super.initState();
-
-    widget.viewModel.addListener(
-      _viewModelListener,
-    );
+    widget.viewModel.addListener(_viewModelListener);
   }
 
   @override
   void dispose() {
-
-    widget.viewModel.removeListener(
-      _viewModelListener,
-    );
-
+    widget.viewModel.removeListener(_viewModelListener);
     _usuarioController.dispose();
     _passwordController.dispose();
-
     super.dispose();
   }
 
-  void _viewModelListener() {
-    setState(() {});
-  }
+  void _viewModelListener() => setState(() {});
 
   Future<void> _login() async {
-
-    final ok =
-    await widget.viewModel.login(
+    final ok = await widget.viewModel.login(
       _usuarioController.text.trim(),
       _passwordController.text,
     );
 
     if (!mounted) return;
-
-    if (ok) {
-
-      Navigator.pushReplacementNamed(
-        context,
-        '/home',
-      );
-    }
+    if (ok) Navigator.pushReplacementNamed(context, '/home');
   }
 
   @override
   Widget build(BuildContext context) {
-
+    final ancho = MediaQuery.of(context).size.width;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'MI Almacén',
-        ),
-      ),
-      body: Padding(
-        padding:
-        const EdgeInsets.all(16),
-        child: Column(
-          children: [
-
-            TextField(
-              controller:
-              _usuarioController,
-              decoration:
-              const InputDecoration(
-                labelText: 'Usuario',
+      backgroundColor: Colors.grey.shade100,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            // En Windows el formulario no se estira demasiado
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 40,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Inicia Sesión",
+                      style: const TextStyle(fontSize: 26,fontWeight: FontWeight.bold),
 
-            const SizedBox(height: 16),
+                    ),
+                    // Logo
+                    const SizedBox(height: 32),
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
 
-            TextField(
-              controller:
-              _passwordController,
-              obscureText: true,
-              decoration:
-              const InputDecoration(
-                labelText: 'Contraseña',
-              ),
-            ),
+                    const SizedBox(height: 32),
 
-            const SizedBox(height: 20),
+                    // Campo usuario
+                    TextField(
+                      controller: _usuarioController,
+                      decoration: InputDecoration(
+                        labelText: 'Usuario',
+                        prefixIcon: const Icon(Icons.person_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
 
-            if (widget.viewModel.error != null)
-              Text(
-                widget.viewModel.error!,
-                style: const TextStyle(
-                  color: Colors.red,
+                    const SizedBox(height: 16),
+
+                    // Campo contraseña con ojo
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: !_verPassword,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _verPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() => _verPassword = !_verPassword);
+                          },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Error
+                    if (widget.viewModel.error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          widget.viewModel.error!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
+
+                    // Botón
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: widget.viewModel.loading ? null : _login,
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: widget.viewModel.loading
+                            ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                          ),
+                        )
+                            : const Text(
+                          'Ingresar',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-
-            const SizedBox(height: 10),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed:
-                widget.viewModel.loading
-                    ? null
-                    : _login,
-                child:
-                widget.viewModel.loading
-                    ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child:
-                  CircularProgressIndicator(),
-                )
-                    : const Text(
-                  'Ingresar',
-                ),
-              ),
             ),
-          ],
+          ),
         ),
       ),
     );

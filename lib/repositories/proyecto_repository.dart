@@ -22,5 +22,7 @@ abstract class ProyectoRepository {
 
   Future<void> sincronizarFirebase();
 
+  Future<void> sincronizarProyectoFirebase(Proyecto proyecto);
+
 
 }

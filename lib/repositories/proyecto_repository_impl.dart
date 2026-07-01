@@ -30,6 +30,8 @@ class ProyectoRepositoryImpl
       orderBy: 'orden',
     );
 
+    print('TOTAL SQLITE: ${result.length}');
+
     return result
         .map(
           (e) => Proyecto.fromMap(e),
@@ -140,4 +142,8 @@ class ProyectoRepositoryImpl
     }
   }
 
+  @override
+  Future<void> sincronizarProyectoFirebase(Proyecto proyecto) async {
+    await firebaseService.actualizarProyecto(proyecto);
+  }
 }

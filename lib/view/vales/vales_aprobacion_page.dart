@@ -23,19 +23,33 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
   @override
   void initState() {
     super.initState();
+    widget.viewModel.addListener(_onViewModelChanged);
     widget.viewModel.cargarVales();
   }
+  void _onViewModelChanged() {
+    for (final vale in widget.viewModel.vales) {
+      _syncValeItems(vale);
+    }
+    setState(() {}); // ahora sí actualiza el estado
+  }
 
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onViewModelChanged);
+    super.dispose();
+  }
   void _syncValeItems(Vale vale) {
-    for (int i = 0; i < vale.items.length; i++) {
-      final key = '${vale.id}_$i';
+    for (final item in vale.items) {
+      final key = '${vale.id}_${item.material.codigo}';
+      final editable = _editableItems[key];
+      print('guardando key: $key');
       _editableItems.putIfAbsent(
         key,
             () => ValeItem(
-          material: vale.items[i].material,
-          proyecto: vale.items[i].proyecto,
-          cantidad: vale.items[i].cantidad,
-          unidad: vale.items[i].unidad,
+          material: item.material,
+          proyecto: item.proyecto,
+          cantidad: item.cantidad,
+          unidad: item.unidad,
         ),
       );
     }
@@ -44,15 +58,13 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
   Vale _buildUpdatedVale(Vale original) {
     final updatedItems = <ValeItem>[];
 
-    for (int i = 0; i < original.items.length; i++) {
-      final key = '${original.id}_$i';
-      final item = _editableItems[key];
-
-      if (item != null) {
-        updatedItems.add(item);
+    for (final item in original.items) {
+      final key = '${original.id}_${item.material.codigo}'; // ← código, no índice
+      final editedItem = _editableItems[key];
+      if (editedItem != null) {
+        updatedItems.add(editedItem);
       }
     }
-
     return Vale(
       id: original.id,
       fechaCreacion: original.fechaCreacion,
@@ -79,7 +91,11 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
           appBar: AppBar(
             title: const Text('Aprobación de Vales'),
           ),
-          body: widget.viewModel.cargando
+            body: RefreshIndicator(
+              onRefresh: () async {
+                await widget.viewModel.actualizar();
+              },
+          child: widget.viewModel.cargando
               ? const Center(child: CircularProgressIndicator())
               : vales.isEmpty
               ? const Center(child: Text('No hay vales pendientes'))
@@ -120,9 +136,12 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                             final i = entry.key;
                             final item = entry.value;
 
-                            final key = '${vale.id}_$i';
-                            final editable =
-                            _editableItems[key]!;
+                            final key = '${vale.id}_${item.material.codigo}';
+                            final editable = _editableItems[key];
+                            if (editable == null) {
+                              print('Editable NULL para key: $key');
+                              return const SizedBox();
+                            }
 
                             return Container(
                               margin:
@@ -140,7 +159,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                 children: [
                                   /// MATERIAL
                                   Text(
-                                    'Material: ${editable.material.descripcion}',
+                                    '${editable.material.descripcion}',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -152,28 +171,28 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
 
                                   /// PROYECTO EDITABLE
                                   DropdownButtonFormField<String>(
-                                    value: editable.proyecto?.clave, // ✔ ahora es String
-
+                                    value: editable.proyecto?.clave,
+                                    isExpanded: true, // ← esto es lo más importante
                                     decoration: const InputDecoration(
                                       labelText: 'Proyecto',
                                       border: OutlineInputBorder(),
                                     ),
-
                                     items: widget.viewModel.proyectos.map((p) {
                                       return DropdownMenuItem<String>(
-                                        value: p.clave, // ✔ String correcto
-                                        child: Text('${p.clave} - ${p.nombre}'),
+                                        value: p.clave,
+                                        child: Text(
+                                          '${p.clave} - ${p.nombre}',
+                                          overflow: TextOverflow.ellipsis, // ← corta el texto si es largo
+                                        ),
                                       );
                                     }).toList(),
-
                                     onChanged: (value) {
                                       final proyecto = widget.viewModel.proyectos
                                           .firstWhere((p) => p.clave == value);
-
                                       setState(() {
                                         _editableItems[key] = ValeItem(
                                           material: editable.material,
-                                          proyecto: proyecto, // ✔ regresas a objeto completo
+                                          proyecto: proyecto,
                                           cantidad: editable.cantidad,
                                           unidad: editable.unidad,
                                         );
@@ -215,31 +234,47 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                   const SizedBox(height: 8),
 
                                   /// UNIDAD
-                                  TextFormField(
-                                    initialValue:
-                                    editable.unidad,
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText: 'Unidad',
-                                      border: OutlineInputBorder(),
+                                  // Unidad
+                                  SizedBox(
+                                    width: 100,
+                                    child: DropdownButtonFormField<String>(
+                                      value: item.unidad,  // ← item, no editable
+                                      dropdownColor: Colors.white,
+                                      style: const TextStyle(fontSize: 13, color: Colors.black),
+                                      decoration: const InputDecoration(
+                                        labelText: 'Unidad',
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                        isDense: true,
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem(value: 'pza', child: Text('pza')),
+                                        DropdownMenuItem(value: 'M',   child: Text('M')),
+                                        DropdownMenuItem(value: 'cm',  child: Text('cm')),
+                                        DropdownMenuItem(value: 'mm',  child: Text('mm')),
+                                        DropdownMenuItem(value: 'L',   child: Text('L')),
+                                        DropdownMenuItem(value: 'ml',  child: Text('ml')),
+                                      ],
+                                      onChanged: (value) {
+                                        if (value == null) return;
+                                          setState(() {
+                                            _editableItems[key] =
+                                                ValeItem(
+                                                  material:
+                                                  editable.material,
+                                                  proyecto:
+                                                  editable.proyecto,
+                                                  cantidad:
+                                                  editable.cantidad,
+                                                  unidad: value,
+                                                );
+                                          });
+                                      },
                                     ),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _editableItems[key] =
-                                            ValeItem(
-                                              material:
-                                              editable.material,
-                                              proyecto:
-                                              editable.proyecto,
-                                              cantidad:
-                                              editable.cantidad,
-                                              unidad: value,
-                                            );
-                                      });
-                                    },
                                   ),
 
                                   const SizedBox(height: 10),
+
 
                                   /// ELIMINAR
                                   Align(
@@ -274,41 +309,27 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                           /// ACCIONES
                           /// =========================
                           Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.end,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == 'aprobar') {
-                                    _mostrarDialogoAccion(
-                                      context,
-                                      vale.id,
-                                      true,
-                                    );
-                                  }
-
-                                  if (value == 'rechazar') {
-                                    _mostrarDialogoAccion(
-                                      context,
-                                      vale.id,
-                                      false,
-                                    );
-                                  }
-
-                                },
-
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem(
-                                    value: 'aprobar',
-                                    child: Text('Aprobar'),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'rechazar',
-                                    child: Text('Rechazar'),
-                                  ),
-                                ],
-                                child:
-                                const Icon(Icons.more_vert),
+                              ElevatedButton.icon(
+                                onPressed: () => _mostrarDialogoAccion(context, vale.id, false),
+                                icon: const Icon(Icons.cancel_outlined, color: Colors.white),
+                                label: const Text('Rechazar'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(130, 40),
+                                ),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: () => _mostrarDialogoAccion(context, vale.id, true),
+                                icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                                label: const Text('Aprobar'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(130, 40),
+                                ),
                               ),
                             ],
                           ),
@@ -320,7 +341,9 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
               );
             },
           ),
+            ),
         );
+
       },
     );
   }

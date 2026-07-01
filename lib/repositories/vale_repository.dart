@@ -30,5 +30,8 @@ abstract class ValeRepository {
 
   Future<void> updateEstado(String valeId, int i) async {}
 
+  Future<List<Vale>> obtenerHistorial({required int rol, required String usuario, required String departamento,
+  });
+
 
 }

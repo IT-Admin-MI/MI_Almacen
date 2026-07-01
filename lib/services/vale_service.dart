@@ -18,4 +18,8 @@ abstract class ValeService {
 
   Future<void> actualizarVale(Vale vale);
 
+  Future<List<Vale>> obtenerHistorial();
+
+  Future<void> descargarVales() async {}
+
 }

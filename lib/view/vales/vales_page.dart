@@ -95,19 +95,7 @@ class _ValesPageState
                             await viewModel.sincronizarMateriales();
                           },
                           icon: const Icon(Icons.download),
-                          label: const Text('Materiales'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: viewModel.cargandoProyectos
-                              ? null
-                              : () async {
-                            await viewModel.sincronizarProyectos();
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Proyectos'),
+                          label: const Text('Actualizar Materiales'),
                         ),
                       ),
                     ],

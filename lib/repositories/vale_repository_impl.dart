@@ -361,6 +361,7 @@ class ValeRepositoryImpl
           item['proyecto_nombre']
           as String,
           orden: 0,
+          status: true,
         ),
         cantidad:
         (item['cantidad']
@@ -404,6 +405,86 @@ class ValeRepositoryImpl
       );
     }
 
+    return lista;
+  }
+
+  @override
+  Future<List<Vale>> obtenerHistorial({
+    required int rol,
+    required String usuario,
+    required String departamento,
+  }) async {
+
+    final db = await databaseHelper.database;
+
+    List<Map<String, dynamic>> result;
+
+    print('ROL: $rol');
+    print('USUARIO: $usuario');
+    print('DEPTO: $departamento');
+
+    switch (rol) {
+
+    // Admin
+      case 0:
+
+        result = await db.query(
+          'vales',
+          orderBy: 'fecha_creacion DESC',
+        );
+
+        break;
+
+    // Supervisor
+      case 1:
+
+        result = await db.query(
+          'vales',
+          where: 'departamento = ?',
+          whereArgs: [departamento],
+          orderBy: 'fecha_creacion DESC',
+        );
+
+        break;
+
+    // Compras
+      case 2:
+
+        result = await db.query(
+          'vales',
+          orderBy: 'fecha_creacion DESC',
+        );
+
+        break;
+
+    // Almacenista
+      case 3:
+
+        result = await db.query(
+          'vales',
+          orderBy: 'fecha_creacion DESC',
+        );
+
+        break;
+
+    // Empleado
+      default:
+
+        result = await db.query(
+          'vales',
+          where: 'usuario_nombre = ?',
+          whereArgs: [usuario],
+          orderBy: 'fecha_creacion DESC',
+        );
+    }
+
+    final lista = <Vale>[];
+
+    for (final row in result) {
+      lista.add(await _mapVale(db, row));
+    }
+
+    print('Registros SQL: ${result.length}');
     return lista;
   }
 }

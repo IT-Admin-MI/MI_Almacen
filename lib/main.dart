@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mi_almacen/services/drive_service_impl.dart';
+import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 
 import 'firebase_options.dart';
 
@@ -68,6 +72,8 @@ class MyApp extends StatelessWidget {
     // CORE
     // ==========================
 
+
+
     final usuarioRepository = UsuarioRepositoryImpl(
       databaseHelper: databaseHelper,
     );
@@ -89,26 +95,22 @@ class MyApp extends StatelessWidget {
     );
 
 
-
     final historialValeRepository = HistorialValeRepositoryImpl(
       databaseHelper: databaseHelper,
+    );
+
+
+    final authService =
+    AuthServiceImpl(
+      firebaseService: firebaseService,
+      usuarioRepository: usuarioRepository,
     );
 
     final valeService = ValeServiceImpl(
       valeRepository: valeRepository,
       databaseHelper: databaseHelper,
       firebaseService: firebaseService,
-    );
-
-
-    // ==========================
-    // SERVICES
-    // ==========================
-
-    final authService =
-    AuthServiceImpl(
-      firebaseService: firebaseService,
-      usuarioRepository: usuarioRepository,
+      authService: authService,
     );
 
     final valeSyncService =
@@ -117,9 +119,23 @@ class MyApp extends StatelessWidget {
       valeRepository: valeRepository,
     );
 
+    final syncService = SyncServiceImpl(
+      proyectoRepository: proyectoRepository,
+      materialRepository: materialRepository,
+      driveService: DriveServiceImpl(),
+      valeSyncService: valeSyncService,
+    );
+
     // ==========================
     // VIEWMODELS
     // ==========================
+
+
+    final historialValeViewModel =
+    HistorialValesViewModel(
+      valeService: valeService,
+      syncService: syncService,
+    );
 
 
     final aprobacionValesViewModel =
@@ -128,7 +144,10 @@ class MyApp extends StatelessWidget {
       valeService: valeService,
       authService: authService,
       proyectoRepository: proyectoRepository,
+      syncService: syncService,
     );
+
+    final homeViewModel = HomeViewModel(proyectoRepository: proyectoRepository);
 
     final loginViewModel =
     LoginViewModel(
@@ -172,6 +191,8 @@ class MyApp extends StatelessWidget {
         proyectoRepository: proyectoRepository,
         valeViewModel: valeViewModel,
         aprobacionValesViewModel: aprobacionValesViewModel,
+        homeViewModel: homeViewModel,
+        historialValesViewModel: historialValeViewModel,
       ),
 
       routes: {
@@ -188,6 +209,8 @@ class MyApp extends StatelessWidget {
               proyectoRepository: proyectoRepository,
               valeViewModel: valeViewModel,
               aprobacionValesViewModel: aprobacionValesViewModel,
+              homeViewModel: homeViewModel,
+              historialValesViewModel: historialValeViewModel,
             ),
       },
     );

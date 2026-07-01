@@ -62,4 +62,38 @@ class ValeSyncServiceImpl
       );
     }
   }
+
+  @override
+  Future<void> descargarVales() async {
+
+    try {
+
+      final vales = await firebaseService.obtenerVales();
+
+      for (final vale in vales) {
+
+        final existente =
+        await valeRepository.getById(vale.id);
+
+        if (existente == null) {
+
+          await valeRepository.insert(vale);
+
+        } else {
+
+          await valeRepository.update(vale);
+
+        }
+      }
+
+      print("VALES DESCARGADOS: ${vales.length}");
+
+    } catch (e) {
+
+      print("ERROR DESCARGANDO VALES");
+      print(e);
+
+    }
+  }
+
 }

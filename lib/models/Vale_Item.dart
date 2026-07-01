@@ -4,11 +4,8 @@ import 'Proyecto.dart';
 class ValeItem {
 
   final Material material;
-
   Proyecto? proyecto;
-
   double cantidad;
-
   String unidad;
 
   ValeItem({
