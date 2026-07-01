@@ -26,6 +26,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
     widget.viewModel.addListener(_onViewModelChanged);
     widget.viewModel.cargarVales();
   }
+
   void _onViewModelChanged() {
     for (final vale in widget.viewModel.vales) {
       _syncValeItems(vale);
