@@ -133,30 +133,62 @@ class _HistorialValesPageState
                   ],
                 ),
               ),
-
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.clear),
-                    label: const Text('Limpiar filtros'),
-                    onPressed: () {
-
-                      widget.viewModel.seleccionarProyecto(null);
-                      widget.viewModel.seleccionarFechaDesde(null);
-                      widget.viewModel.seleccionarFechaHasta(null);
-
-                    },
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.date_range),
+                            label: Text(
+                              widget.viewModel.fechaDesde == null
+                                  ? 'Desde'
+                                  : '${widget.viewModel.fechaDesde!.day}/${widget.viewModel.fechaDesde!.month}/${widget.viewModel.fechaDesde!.year}',
+                            ),
+                            onPressed: () => _seleccionarFecha(desde: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.date_range),
+                            label: Text(
+                              widget.viewModel.fechaHasta == null
+                                  ? 'Hasta'
+                                  : '${widget.viewModel.fechaHasta!.day}/${widget.viewModel.fechaHasta!.month}/${widget.viewModel.fechaHasta!.year}',
+                            ),
+                            onPressed: () => _seleccionarFecha(desde: false),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+
+                    padding: const EdgeInsets.all(12),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.clear),
+                        label: const Text('Limpiar filtros'),
+                        onPressed: () {
+                          widget.viewModel.seleccionarProyecto(null);
+                          widget.viewModel.seleccionarFechaDesde(null);
+                          widget.viewModel.seleccionarFechaHasta(null);
+                        },
+                      ),
+                    ),
+                  ),
 
               Expanded(
                 child: vales.isEmpty
                     ? const Center(
 
                   child: Text('No existen vales'),
+                widget.viewModel.vales.isEmpty
+                    ? const SliverFillRemaining(
+                  child: Center(child: Text('No existen vales')),
                 )
                     : ListView.builder(
                   itemCount: vales.length,
@@ -165,6 +197,11 @@ class _HistorialValesPageState
                     final Vale vale = vales[index];
 
                     return Opacity(
+                    : SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                      final Vale vale = widget.viewModel.vales[index];
+                      return Opacity(
                         opacity: vale.estado == 0 ? 1.0 : 0.5,
                       child: Card(
 
@@ -205,27 +242,48 @@ class _HistorialValesPageState
                                     ),
                                     subtitle: Text(
                                       '${item.cantidad} ${item.unidad}',
-                                    ),
-                                    trailing: Text(
-                                      item.proyecto?.clave ?? '',
-                                    ),
-                                  ),
-                                ),
-
-                              ],
-                            ),
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
                           ),
-
-                        ],
-                      ),
-                    ),
-                    );
-                  },
+                          child: ExpansionTile(
+                            title: Text(vale.id),
+                            subtitle: Text(
+                              '${vale.usuarioNombre}\n${vale.departamento}',
+                            ),
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Estado: ${vale.estado == 1 ? "Aprobado" : "No aprobado"}',
+                                    ),
+                                    Text('Fecha: ${vale.fechaCreacion}'),
+                                    const Divider(),
+                                    ...vale.items.map(
+                                          (item) => ListTile(
+                                        dense: true,
+                                        title: Text(item.material.descripcion),
+                                        subtitle: Text('${item.cantidad} ${item.unidad}'),
+                                        trailing: Text(item.proyecto?.clave ?? ''),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: widget.viewModel.vales.length,
+                  ),
                 ),
-              ),
-
-            ],
-          ),
+              ],
+            ),
           ),
         );
       },

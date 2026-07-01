@@ -19,7 +19,7 @@ class AprobacionValesPage extends StatefulWidget {
 
 class _AprobacionValesPageState extends State<AprobacionValesPage> {
   final Map<String, ValeItem> _editableItems = {};
-
+  bool _refrescando = false;
   @override
   void initState() {
     super.initState();
@@ -91,172 +91,174 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
           appBar: AppBar(
             title: const Text('Aprobación de Vales'),
           ),
-            body: RefreshIndicator(
-              onRefresh: () async {
-                await widget.viewModel.actualizar();
-              },
-          child: widget.viewModel.cargando
-              ? const Center(child: CircularProgressIndicator())
-              : vales.isEmpty
-              ? const Center(child: Text('No hay vales pendientes'))
-              : ListView.builder(
-            itemCount: vales.length,
-            itemBuilder: (context, index) {
-              final vale = vales[index];
+          body: RefreshIndicator(
+            onRefresh: () async {
+              setState(() => _refrescando = true);
+              await widget.viewModel.actualizar();
+              if (mounted) setState(() => _refrescando = false);
+            },
+            child: (widget.viewModel.cargando && !_refrescando)
+                ? const Center(child: CircularProgressIndicator())
+                : vales.isEmpty
+                ? const Center(child: Text('No hay vales pendientes'))
+                : ListView.builder(
+              itemCount: vales.length,
+              itemBuilder: (context, index) {
+                final vale = vales[index];
 
-              _syncValeItems(vale);
+                _syncValeItems(vale);
 
-              return Card(
-                margin: const EdgeInsets.all(8),
-                child: ExpansionTile(
-                  title: Text('Vale: ${vale.id}'),
-                  subtitle:
-                  Text('Usuario: ${vale.usuarioNombre}'),
-                  children: [
-                    const Divider(),
+                return Card(
+                  margin: const EdgeInsets.all(8),
+                  child: ExpansionTile(
+                    title: Text('Vale: ${vale.id}'),
+                    subtitle:
+                    Text('Usuario: ${vale.usuarioNombre}'),
+                    children: [
+                      const Divider(),
 
-                    /// =========================
-                    /// ITEMS
-                    /// =========================
-                    Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Materiales:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          ...vale.items.asMap().entries.map((entry) {
-                            final i = entry.key;
-                            final item = entry.value;
-
-                            final key = '${vale.id}_${item.material.codigo}';
-                            final editable = _editableItems[key];
-                            if (editable == null) {
-                              print('Editable NULL para key: $key');
-                              return const SizedBox();
-                            }
-
-                            return Container(
-                              margin:
-                              const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: Colors.grey.shade300),
-                                borderRadius:
-                                BorderRadius.circular(8),
+                      /// =========================
+                      /// ITEMS
+                      /// =========================
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Materiales:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
-                              child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                                children: [
-                                  /// MATERIAL
-                                  Text(
-                                    '${editable.material.descripcion}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                      'Código: ${editable.material.codigo}'),
+                            ),
+                            const SizedBox(height: 10),
 
-                                  const SizedBox(height: 8),
+                            ...vale.items.asMap().entries.map((entry) {
+                              final i = entry.key;
+                              final item = entry.value;
 
-                                  /// PROYECTO EDITABLE
-                                  DropdownButtonFormField<String>(
-                                    value: editable.proyecto?.clave,
-                                    isExpanded: true, // ← esto es lo más importante
-                                    decoration: const InputDecoration(
-                                      labelText: 'Proyecto',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    items: widget.viewModel.proyectos.map((p) {
-                                      return DropdownMenuItem<String>(
-                                        value: p.clave,
-                                        child: Text(
-                                          '${p.clave} - ${p.nombre}',
-                                          overflow: TextOverflow.ellipsis, // ← corta el texto si es largo
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (value) {
-                                      final proyecto = widget.viewModel.proyectos
-                                          .firstWhere((p) => p.clave == value);
-                                      setState(() {
-                                        _editableItems[key] = ValeItem(
-                                          material: editable.material,
-                                          proyecto: proyecto,
-                                          cantidad: editable.cantidad,
-                                          unidad: editable.unidad,
-                                        );
-                                      });
-                                    },
-                                  ),
-                                  const SizedBox(height: 8),
+                              final key = '${vale.id}_${item.material.codigo}';
+                              final editable = _editableItems[key];
+                              if (editable == null) {
+                                print('Editable NULL para key: $key');
+                                return const SizedBox();
+                              }
 
-                                  /// CANTIDAD
-                                  TextFormField(
-                                    initialValue:
-                                    editable.cantidad
-                                        .toString(),
-                                    keyboardType:
-                                    TextInputType.number,
-                                    decoration:
-                                    const InputDecoration(
-                                      labelText: 'Cantidad',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _editableItems[key] =
-                                            ValeItem(
-                                              material:
-                                              editable.material,
-                                              proyecto:
-                                              editable.proyecto,
-                                              cantidad:
-                                              double.tryParse(
-                                                  value) ??
-                                                  editable.cantidad,
-                                              unidad: editable.unidad,
-                                            );
-                                      });
-                                    },
-                                  ),
-
-                                  const SizedBox(height: 8),
-
-                                  /// UNIDAD
-                                  // Unidad
-                                  SizedBox(
-                                    width: 100,
-                                    child: DropdownButtonFormField<String>(
-                                      value: item.unidad,  // ← item, no editable
-                                      dropdownColor: Colors.white,
-                                      style: const TextStyle(fontSize: 13, color: Colors.black),
-                                      decoration: const InputDecoration(
-                                        labelText: 'Unidad',
-                                        border: OutlineInputBorder(),
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                        isDense: true,
+                              return Container(
+                                margin:
+                                const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.grey.shade300),
+                                  borderRadius:
+                                  BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                                  children: [
+                                    /// MATERIAL
+                                    Text(
+                                      '${editable.material.descripcion}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      items: const [
-                                        DropdownMenuItem(value: 'pza', child: Text('pza')),
-                                        DropdownMenuItem(value: 'M',   child: Text('M')),
-                                        DropdownMenuItem(value: 'cm',  child: Text('cm')),
-                                        DropdownMenuItem(value: 'mm',  child: Text('mm')),
-                                        DropdownMenuItem(value: 'L',   child: Text('L')),
-                                        DropdownMenuItem(value: 'ml',  child: Text('ml')),
-                                      ],
+                                    ),
+                                    Text(
+                                        'Código: ${editable.material.codigo}'),
+
+                                    const SizedBox(height: 8),
+
+                                    /// PROYECTO EDITABLE
+                                    DropdownButtonFormField<String>(
+                                      value: editable.proyecto?.clave,
+                                      isExpanded: true, // ← esto es lo más importante
+                                      decoration: const InputDecoration(
+                                        labelText: 'Proyecto',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      items: widget.viewModel.proyectos.map((p) {
+                                        return DropdownMenuItem<String>(
+                                          value: p.clave,
+                                          child: Text(
+                                            '${p.clave} - ${p.nombre}',
+                                            overflow: TextOverflow.ellipsis, // ← corta el texto si es largo
+                                          ),
+                                        );
+                                      }).toList(),
                                       onChanged: (value) {
-                                        if (value == null) return;
+                                        final proyecto = widget.viewModel.proyectos
+                                            .firstWhere((p) => p.clave == value);
+                                        setState(() {
+                                          _editableItems[key] = ValeItem(
+                                            material: editable.material,
+                                            proyecto: proyecto,
+                                            cantidad: editable.cantidad,
+                                            unidad: editable.unidad,
+                                          );
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    /// CANTIDAD
+                                    TextFormField(
+                                      initialValue:
+                                      editable.cantidad
+                                          .toString(),
+                                      keyboardType:
+                                      TextInputType.number,
+                                      decoration:
+                                      const InputDecoration(
+                                        labelText: 'Cantidad',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _editableItems[key] =
+                                              ValeItem(
+                                                material:
+                                                editable.material,
+                                                proyecto:
+                                                editable.proyecto,
+                                                cantidad:
+                                                double.tryParse(
+                                                    value) ??
+                                                    editable.cantidad,
+                                                unidad: editable.unidad,
+                                              );
+                                        });
+                                      },
+                                    ),
+
+                                    const SizedBox(height: 8),
+
+                                    /// UNIDAD
+                                    // Unidad
+                                    SizedBox(
+                                      width: 100,
+                                      child: DropdownButtonFormField<String>(
+                                        value: item.unidad,  // ← item, no editable
+                                        dropdownColor: Colors.white,
+                                        style: const TextStyle(fontSize: 13, color: Colors.black),
+                                        decoration: const InputDecoration(
+                                          labelText: 'Unidad',
+                                          border: OutlineInputBorder(),
+                                          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          isDense: true,
+                                        ),
+                                        items: const [
+                                          DropdownMenuItem(value: 'pza', child: Text('pza')),
+                                          DropdownMenuItem(value: 'M',   child: Text('M')),
+                                          DropdownMenuItem(value: 'cm',  child: Text('cm')),
+                                          DropdownMenuItem(value: 'mm',  child: Text('mm')),
+                                          DropdownMenuItem(value: 'L',   child: Text('L')),
+                                          DropdownMenuItem(value: 'ml',  child: Text('ml')),
+                                        ],
+                                        onChanged: (value) {
+                                          if (value == null) return;
                                           setState(() {
                                             _editableItems[key] =
                                                 ValeItem(
@@ -269,79 +271,79 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                                   unidad: value,
                                                 );
                                           });
-                                      },
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 10),
-
-
-                                  /// ELIMINAR
-                                  Align(
-                                    alignment:
-                                    Alignment.centerRight,
-                                    child: TextButton.icon(
-                                      onPressed: () {
-                                        setState(() {
-                                          vale.items.removeAt(i);
-                                          _editableItems
-                                              .remove(key);
-                                        });
-                                      },
-                                      icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red),
-                                      label: const Text(
-                                        'Eliminar',
-                                        style: TextStyle(
-                                            color: Colors.red),
+                                        },
                                       ),
                                     ),
+
+                                    const SizedBox(height: 10),
+
+
+                                    /// ELIMINAR
+                                    Align(
+                                      alignment:
+                                      Alignment.centerRight,
+                                      child: TextButton.icon(
+                                        onPressed: () {
+                                          setState(() {
+                                            vale.items.removeAt(i);
+                                            _editableItems
+                                                .remove(key);
+                                          });
+                                        },
+                                        icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red),
+                                        label: const Text(
+                                          'Eliminar',
+                                          style: TextStyle(
+                                              color: Colors.red),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+
+                            const Divider(),
+
+                            /// =========================
+                            /// ACCIONES
+                            /// =========================
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () => _mostrarDialogoAccion(context, vale.id, false),
+                                  icon: const Icon(Icons.cancel_outlined, color: Colors.white),
+                                  label: const Text('Rechazar'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(130, 40),
                                   ),
-                                ],
-                              ),
-                            );
-                          }),
-
-                          const Divider(),
-
-                          /// =========================
-                          /// ACCIONES
-                          /// =========================
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: () => _mostrarDialogoAccion(context, vale.id, false),
-                                icon: const Icon(Icons.cancel_outlined, color: Colors.white),
-                                label: const Text('Rechazar'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size(130, 40),
                                 ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: () => _mostrarDialogoAccion(context, vale.id, true),
-                                icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-                                label: const Text('Aprobar'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size(130, 40),
+                                ElevatedButton.icon(
+                                  onPressed: () => _mostrarDialogoAccion(context, vale.id, true),
+                                  icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                                  label: const Text('Aprobar'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    minimumSize: const Size(130, 40),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                    ],
+                  ),
+                );
+              },
             ),
+          ),
         );
 
       },

@@ -164,31 +164,31 @@ class _ValesPageState
           ),
 
           // ── BOTÓN CREAR VALE ───────────────────────────
-        SafeArea(
+          SafeArea(
             top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
-                    ? () async {
-                  final resultado = await viewModel.crearVale();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(resultado
-                          ? 'Vale creado correctamente'
-                          : 'Error al crear el vale'),
-                    ),
-                  );
-                }
-                    : null,
-                child: const Text('Crear Vale'),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
+                      ? () async {
+                    final resultado = await viewModel.crearVale();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(resultado
+                            ? 'Vale creado correctamente'
+                            : 'Error al crear el vale'),
+                      ),
+                    );
+                  }
+                      : null,
+                  child: const Text('Crear Vale'),
+                ),
               ),
             ),
           ),
-         ),
         ],
       ),
     );

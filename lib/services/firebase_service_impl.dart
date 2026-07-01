@@ -387,7 +387,11 @@ class FirebaseServiceImpl implements FirebaseService {
       'nombre': proyecto.nombre,
       'orden': proyecto.orden,
       'status': proyecto.status,
-      'fechaEntrega': proyecto.fechaEntrega?.toIso8601String(),
+      'fechaEntrega': proyecto.fechaEntrega != null
+          ? '${proyecto.fechaEntrega!.year}-'
+          '${proyecto.fechaEntrega!.month.toString().padLeft(2, '0')}-'
+          '${proyecto.fechaEntrega!.day.toString().padLeft(2, '0')}'
+          : null,
     }, SetOptions(merge: true)); // ← set con merge, no update
   }
 }
