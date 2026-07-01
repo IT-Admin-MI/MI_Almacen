@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mi_almacen/database/database_helper.dart';
 import 'package:mi_almacen/models/Vale.dart';
+import 'package:mi_almacen/services/auth_service.dart';
 import 'package:mi_almacen/services/firebase_service_impl.dart';
 import 'package:mi_almacen/services/vale_service.dart';
 import 'package:mi_almacen/repositories/vale_repository.dart';
@@ -11,11 +12,13 @@ class ValeServiceImpl implements ValeService {
   final ValeRepository valeRepository;
   final DatabaseHelper databaseHelper;
   final FirebaseServiceImpl firebaseService;
+  final AuthService authService;
 
   ValeServiceImpl({
     required this.valeRepository,
     required this.databaseHelper,
     required this.firebaseService,
+    required this.authService,
   });
 
   @override
@@ -119,5 +122,32 @@ class ValeServiceImpl implements ValeService {
     }
 
     await batch.commit();
+  }
+
+  @override
+  Future<List<Vale>> obtenerHistorial() async {
+
+    final usuario = await authService.usuarioActual();
+
+    print('===== OBTENER HISTORIAL =====');
+    print(usuario?.nombre);
+    print(usuario?.rol);
+    print(usuario?.departamento);
+
+    if (usuario == null) {
+      return [];
+    }
+
+    return valeRepository.obtenerHistorial(
+      rol: usuario.rol,
+      usuario: usuario.nombre,
+      departamento: usuario.departamento,
+    );
+  }
+
+  @override
+  Future<void> descargarVales() {
+    // TODO: implement descargarVales
+    throw UnimplementedError();
   }
 }

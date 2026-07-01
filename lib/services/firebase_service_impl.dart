@@ -81,6 +81,7 @@ class FirebaseServiceImpl implements FirebaseService {
           data['fechaEntrega'],
         ) : null,
         orden: data['orden'] ?? '',
+        status: data['status']??true,
       );
 
     }).toList();
@@ -138,9 +139,106 @@ class FirebaseServiceImpl implements FirebaseService {
   }
 
   @override
-  Future<List<Vale>> obtenerVales() {
-    // TODO: implement obtenerVales
-    throw UnimplementedError();
+  Future<List<Vale>> obtenerVales() async {
+
+    final snapshot =
+    await firestore
+        .collection('vales')
+        .get();
+
+    final lista = <Vale>[];
+
+    for (final doc in snapshot.docs) {
+
+      final data = doc.data();
+
+      final itemsSnapshot =
+      await doc.reference
+          .collection('items')
+          .get();
+
+      final items = <ValeItem>[];
+
+      for (final itemDoc in itemsSnapshot.docs) {
+
+        final item = itemDoc.data();
+
+        items.add(
+
+          ValeItem(
+
+            material: Material(
+              codigo: item['material_codigo'].toString(),
+              descripcion: item['material_descripcion'].toString(),
+              existencia: 0,
+              tipo: '',
+              updatedAt: null,
+              syncStatus: 0,
+            ),
+
+            proyecto: item['proyecto_clave'] != null
+                ? Proyecto(
+              clave: item['proyecto_clave'].toString(),
+              nombre: item['proyecto_nombre'].toString(),
+              orden: 0,
+              status: true,
+            )
+                : null,
+
+            cantidad:
+            (item['cantidad'] as num).toDouble(),
+
+            unidad:
+            item['unidad'].toString(),
+          ),
+        );
+      }
+
+      lista.add(
+
+        Vale(
+
+          id: data['id'],
+
+          fechaCreacion:
+          DateTime.parse(
+            data['fecha_creacion'],
+          ),
+
+          usuarioNombre:
+          data['usuario_nombre'],
+
+          usuarioRol:
+          data['usuario_rol'],
+
+          departamento:
+          data['departamento'],
+
+          estado:
+          data['estado'],
+
+          fechaValidacion:
+          data['fecha_validacion'] != null
+              ? DateTime.parse(
+            data['fecha_validacion'],
+          )
+              : null,
+
+          validadoPor:
+          data['validado_por'],
+
+          comentarioValidacion:
+          data['comentario_validacion'],
+
+          syncStatus:
+          data['sync_status'] ?? 1,
+
+          items: items,
+        ),
+      );
+    }
+
+    return lista;
   }
 
   Future<List<Vale>> obtenerValesPendientes() async {
@@ -196,6 +294,7 @@ class FirebaseServiceImpl implements FirebaseService {
               clave: item['proyecto_clave'].toString(),
               nombre: item['proyecto_nombre'].toString(),
               orden: 0,
+              status: item['status'] as bool? ?? true,
             )
                 : null,
 
@@ -279,5 +378,20 @@ class FirebaseServiceImpl implements FirebaseService {
       'validado_por': validadoPor,
       'fecha_validacion': DateTime.now().toIso8601String(),
     });
+  }
+
+  @override
+  Future<void> actualizarProyecto(Proyecto proyecto) async {
+    await firestore.collection('projects').doc(proyecto.clave).set({
+      'codigo': proyecto.clave,
+      'nombre': proyecto.nombre,
+      'orden': proyecto.orden,
+      'status': proyecto.status,
+      'fechaEntrega': proyecto.fechaEntrega != null
+          ? '${proyecto.fechaEntrega!.year}-'
+          '${proyecto.fechaEntrega!.month.toString().padLeft(2, '0')}-'
+          '${proyecto.fechaEntrega!.day.toString().padLeft(2, '0')}'
+          : null,
+    }, SetOptions(merge: true)); // ← set con merge, no update
   }
 }

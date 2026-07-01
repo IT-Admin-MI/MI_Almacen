@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mi_almacen/models/Proyecto.dart';
 import 'package:mi_almacen/models/Vale_Item.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/services/sync_service.dart';
 
 import '../models/Vale.dart';
 import '../services/firebase_service.dart';
@@ -14,6 +15,7 @@ class AprobacionValesViewModel
   final FirebaseService firebaseService;
   final ProyectoRepository proyectoRepository;
   final AuthService authService;
+  final SyncService syncService;
 
 
   AprobacionValesViewModel({
@@ -21,6 +23,7 @@ class AprobacionValesViewModel
     required this.valeService,
     required this.proyectoRepository,
     required this.authService,
+    required this.syncService,
 
   });
 
@@ -170,6 +173,19 @@ class AprobacionValesViewModel
     );
 
     notifyListeners();
+  }
+
+  Future<void> actualizar() async {
+    _cargando = true;
+    notifyListeners();
+
+    try {
+      await syncService.sincronizarVales();
+      await cargarVales();
+    } finally {
+      _cargando = false;
+      notifyListeners();
+    }
   }
 
 }

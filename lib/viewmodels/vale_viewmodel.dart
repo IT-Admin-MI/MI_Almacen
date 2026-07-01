@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:mi_almacen/models/Usuario.dart';
 import 'package:mi_almacen/services/vate_sync_service.dart';
 import '../models/Material.dart';
 import '../models/Proyecto.dart';
@@ -422,7 +423,7 @@ class ValeViewModel extends ChangeNotifier {
       }
 
       final vale = Vale(
-        id: IdGenerator.generarValeId(),
+        id: IdGenerator.generarValeId(nombre: '${sesion.nombre}', departamento: '${sesion.departamento}'),
 
         usuarioNombre:
         sesion.nombre,

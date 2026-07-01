@@ -8,4 +8,7 @@ abstract class ValeSyncService {
 
   Future<void> sincronizarPendientes();
 
+  /// NUEVO
+  Future<void> descargarVales();
+
 }

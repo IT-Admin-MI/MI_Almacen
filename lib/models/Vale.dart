@@ -3,25 +3,15 @@ import 'package:mi_almacen/models/Vale_Item.dart';
 class Vale {
 
   final String id;
-
   final DateTime fechaCreacion;
-
   final String usuarioNombre;
-
   final int usuarioRol;
-
   final int estado;
-
   final DateTime? fechaValidacion;
-
   final String? validadoPor;
-
   final String? comentarioValidacion;
-
   final int syncStatus;
-
   final String? departamento;
-
   final List<ValeItem> items;
 
   Vale({

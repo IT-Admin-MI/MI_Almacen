@@ -14,6 +14,7 @@ CREATE TABLE proyectos(
   clave TEXT PRIMARY KEY,
   nombre TEXT NOT NULL,
   orden INTEGER NOT NULL,
+  status BOLEAN NOT NULL,
   fechaEntrega TEXT
 )
 ''';

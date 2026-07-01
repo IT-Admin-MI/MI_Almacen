@@ -1,16 +1,22 @@
 class IdGenerator {
 
-  static String generarValeId() {
+  static String generarValeId({
+    required String nombre,
+    required String departamento,
+  }) {
+    final now = DateTime.now();
 
-    final now =
-    DateTime.now();
+    final fecha =
+        '${now.year}'
+        '${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}';
 
-    return
-      'VALE_'
-          '${now.year}'
-          '${now.month.toString().padLeft(2, '0')}'
-          '${now.day.toString().padLeft(2, '0')}'
-          '_'
-          '${now.microsecondsSinceEpoch}';
+    final hora =
+        '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}'
+        '${now.second.toString().padLeft(2, '0')}'
+        '${now.millisecond.toString().padLeft(3, '0')}';
+
+    return 'VALE_${fecha}_${hora}_${departamento.replaceAll(' ', '_')}_${nombre.replaceAll(' ', '_')}';
   }
 }

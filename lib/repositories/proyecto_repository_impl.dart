@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mi_almacen/services/firebase_service.dart';
 
 import '../database/database_helper.dart';
@@ -29,6 +30,8 @@ class ProyectoRepositoryImpl
       'proyectos',
       orderBy: 'orden',
     );
+
+    print('TOTAL SQLITE: ${result.length}');
 
     return result
         .map(
@@ -140,4 +143,32 @@ class ProyectoRepositoryImpl
     }
   }
 
+  @override
+  Future<void> sincronizarProyectoFirebase(Proyecto proyecto) async {
+    await firebaseService.actualizarProyecto(proyecto);
+  }
+
+  @override
+  Future<void> sincronizarListaProyectos(List<Proyecto> proyectos) async {
+    final batch = FirebaseFirestore.instance.batch();
+    final ref = FirebaseFirestore.instance.collection('projects');
+
+    for (final p in proyectos) {
+      final doc = ref.doc(p.clave);
+
+      batch.set(doc, {
+        'codigo': p.clave,
+        'nombre': p.nombre,
+        'orden': p.orden,
+        'status': p.status,
+        'fechaEntrega': p.fechaEntrega != null
+            ? '${p.fechaEntrega!.year}-'
+            '${p.fechaEntrega!.month.toString().padLeft(2, '0')}-'
+            '${p.fechaEntrega!.day.toString().padLeft(2, '0')}'
+            : null,
+      }, SetOptions(merge: true));
+    }
+
+    await batch.commit();
+  }
 }

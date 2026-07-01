@@ -20,4 +20,8 @@ abstract class FirebaseService {
 
   Future<List<Vale>> obtenerValesPendientes();
 
+  Future<void> actualizarProyecto(Proyecto proyecto);
+
+
+
 }

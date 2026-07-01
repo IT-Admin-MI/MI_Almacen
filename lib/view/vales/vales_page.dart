@@ -95,19 +95,7 @@ class _ValesPageState
                             await viewModel.sincronizarMateriales();
                           },
                           icon: const Icon(Icons.download),
-                          label: const Text('Materiales'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: viewModel.cargandoProyectos
-                              ? null
-                              : () async {
-                            await viewModel.sincronizarProyectos();
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Proyectos'),
+                          label: const Text('Actualizar Materiales'),
                         ),
                       ),
                     ],
@@ -176,31 +164,31 @@ class _ValesPageState
           ),
 
           // ── BOTÓN CREAR VALE ───────────────────────────
-        SafeArea(
+          SafeArea(
             top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
-                    ? () async {
-                  final resultado = await viewModel.crearVale();
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(resultado
-                          ? 'Vale creado correctamente'
-                          : 'Error al crear el vale'),
-                    ),
-                  );
-                }
-                    : null,
-                child: const Text('Crear Vale'),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
+                      ? () async {
+                    final resultado = await viewModel.crearVale();
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(resultado
+                            ? 'Vale creado correctamente'
+                            : 'Error al crear el vale'),
+                      ),
+                    );
+                  }
+                      : null,
+                  child: const Text('Crear Vale'),
+                ),
               ),
             ),
           ),
-         ),
         ],
       ),
     );
