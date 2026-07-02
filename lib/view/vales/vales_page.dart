@@ -80,72 +80,91 @@ class _ValesPageState
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.42,
             ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-                  // BOTONES SYNC
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            await viewModel.sincronizarMateriales();
-                          },
-                          icon: const Icon(Icons.download),
-                          label: const Text('Actualizar Materiales'),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // BUSCADOR
-                  TextField(
-                    controller: buscadorController,
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar material',
-                      hintText: 'Código o descripción',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                try {
+                  await viewModel.sincronizarMateriales();
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Inventario actualizado correctamente'),
                     ),
-                    onChanged: viewModel.buscarMaterial,
-                  ),
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Error al actualizar el inventario'),
+                    ),
+                  );
+                }
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
 
-                  const SizedBox(height: 10),
-
-                  // RESULTADOS BÚSQUEDA
-                  if (viewModel.resultadosBusqueda.isNotEmpty)
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.20,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(),
-                          borderRadius: BorderRadius.circular(8),
+                    // LEYENDA DE ACTUALIZACIÓN
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.swipe_down, size: 18, color: Colors.grey.shade600),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Desliza aquí para actualizar el inventario',
+                          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                         ),
-                        child: ListView.builder(
-                          itemCount: viewModel.resultadosBusqueda.length,
-                          itemBuilder: (context, index) {
-                            final material = viewModel.resultadosBusqueda[index];
-                            return ListTile(
-                              title: Text(material.descripcion),
-                              subtitle: Text(material.codigo),
-                              trailing: Text(material.existencia.toString()),
-                              onTap: () {
-                                viewModel.agregarMaterial(material);
-                                buscadorController.clear();
-                              },
-                            );
-                          },
-                        ),
-                      ),
+                      ],
                     ),
 
-                  const SizedBox(height: 10),
-                ],
+                    const SizedBox(height: 16),
+
+                    // BUSCADOR
+                    TextField(
+                      controller: buscadorController,
+                      decoration: const InputDecoration(
+                        labelText: 'Buscar material',
+                        hintText: 'Código o descripción',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: viewModel.buscarMaterial,
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // RESULTADOS BÚSQUEDA
+                    if (viewModel.resultadosBusqueda.isNotEmpty)
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.20,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ListView.builder(
+                            itemCount: viewModel.resultadosBusqueda.length,
+                            itemBuilder: (context, index) {
+                              final material = viewModel.resultadosBusqueda[index];
+                              return ListTile(
+                                title: Text(material.descripcion),
+                                subtitle: Text(material.codigo),
+                                trailing: Text(material.existencia.toString()),
+                                onTap: () {
+                                  viewModel.agregarMaterial(material);
+                                  buscadorController.clear();
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+
+                    const SizedBox(height: 10),
+                  ],
+                ),
               ),
             ),
           ),
@@ -153,7 +172,27 @@ class _ValesPageState
           // ── LISTA VALE ITEMS ───────────────────────────
           Expanded(
             child: viewModel.items.isEmpty
-                ? const Center(child: Text('Sin materiales agregados'))
+                ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/logo_bn.png',
+                    width: 150,
+                    color: Colors.grey.withOpacity(0.4),
+                    colorBlendMode: BlendMode.modulate,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Sin materiales agregados',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            )
                 : ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: viewModel.items.length,

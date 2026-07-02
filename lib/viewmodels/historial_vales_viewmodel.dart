@@ -172,6 +172,21 @@ class HistorialValesViewModel extends ChangeNotifier {
     return lista;
   }
 
+  Map<String, String> get proyectosMap {
+    final mapa = <String, String>{};
+
+    for (final vale in _todosLosVales) {
+      for (final item in vale.items) {
+        final proyecto = item.proyecto;
+        if (proyecto != null) {
+          mapa[proyecto.clave] = proyecto.nombre;
+        }
+      }
+    }
+
+    return mapa;
+  }
+
   void seleccionarUsuario(String? usuario){
 
     _usuarioSeleccionado = usuario;

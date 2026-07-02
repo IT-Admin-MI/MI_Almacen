@@ -101,7 +101,28 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
             child: (widget.viewModel.cargando && !_refrescando)
                 ? const Center(child: CircularProgressIndicator())
                 : vales.isEmpty
-                ? const Center(child: Text('No hay vales pendientes'))
+          ? Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Opacity(
+                opacity: 0.15,
+                child: Image.asset(
+                  'assets/images/logo_bn.png',
+                  width: 180,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No hay vales pendientes',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        )
                 : ListView.builder(
               itemCount: vales.length,
               itemBuilder: (context, index) {

@@ -63,7 +63,8 @@ class _HistorialValesPageState
           ),
           body: widget.viewModel.cargando
               ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
+              : SafeArea(
+              child: RefreshIndicator(
             onRefresh: widget.viewModel.actualizar,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -148,8 +149,28 @@ class _HistorialValesPageState
                 ),
 
                 widget.viewModel.vales.isEmpty
-                    ? const SliverFillRemaining(
-                  child: Center(child: Text('No existen vales')),
+                    ? SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/logo_bn.png',
+                          width: 150,
+                          color: Colors.grey.withOpacity(0.4),
+                          colorBlendMode: BlendMode.modulate,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No existen vales',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 )
                     : SliverList(
                   delegate: SliverChildBuilderDelegate(
@@ -199,6 +220,7 @@ class _HistorialValesPageState
                 ),
               ],
             ),
+          ),
           ),
         );
       },

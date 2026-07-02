@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mi_almacen/services/firebase_service_impl.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/view/vales/historial_vales_page.dart';
 import 'package:mi_almacen/view/vales/vales_page.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
@@ -243,21 +243,6 @@ class _HomePageState
                       onChanged: (val) => setDialogState(() => status = val),
                       contentPadding: EdgeInsets.zero,
                     ),
-
-                    // ADVERTENCIA DESACTIVAR
-                    if (!status && proyecto.status)
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange),
-                        ),
-                        child: const Text(
-                          'El proyecto se marcará como inactivo y dejará de aparecer en la lista principal.',
-                          style: TextStyle(fontSize: 12, color: Colors.orange),
-                        ),
-                      ),
                   ],
                 ),
               ),
@@ -353,8 +338,13 @@ class _HomePageState
 
   Future<void> _mostrarDialogoCambiarOrden(Proyecto proyecto) async {
     bool isSaving = false;
-    final ctrl = TextEditingController(text: proyecto.orden.toString());
-    String? errorOrden;
+
+    final activos = proyectos.where((p) => p.status).toList();
+    int ordenSeleccionado = proyecto.orden.clamp(1, activos.length);
+
+    final scrollController = FixedExtentScrollController(
+      initialItem: ordenSeleccionado - 1,
+    );
 
     await showDialog(
       context: context,
@@ -363,14 +353,50 @@ class _HomePageState
           builder: (context, setDialogState) {
             return AlertDialog(
               title: Text('Orden: ${proyecto.clave}'),
-              content: TextFormField(
-                controller: ctrl,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: 'Nuevo orden',
-                  border: const OutlineInputBorder(),
-                  errorText: errorOrden,
+              content: SizedBox(
+                height: 220,
+                width: 140,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CupertinoPicker(
+                      scrollController: scrollController,
+                      itemExtent: 44,
+                      diameterRatio: 1.2,
+                      onSelectedItemChanged: (index) {
+                        setDialogState(() => ordenSeleccionado = index + 1);
+                      },
+                      children: List.generate(activos.length, (i) {
+                        final numero = i + 1;
+                        final seleccionado = numero == ordenSeleccionado;
+                        return Center(
+                          child: Text(
+                            '$numero',
+                            style: TextStyle(
+                              fontSize: seleccionado ? 26 : 20,
+                              fontWeight:
+                              seleccionado ? FontWeight.bold : FontWeight.normal,
+                              color: seleccionado ? Colors.blue : Colors.black54,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    // Franja que marca el ítem central seleccionado
+                    IgnorePointer(
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          border: Border.symmetric(
+                            horizontal: BorderSide(
+                              color: Colors.blue.shade200,
+                              width: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               actions: [
@@ -379,32 +405,22 @@ class _HomePageState
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final nuevoOrden = int.tryParse(ctrl.text.trim());
-
-                    if (nuevoOrden == null || nuevoOrden < 1) {
-                      setDialogState(() => errorOrden = 'Ingresa un número válido');
-                      return;
-                    }
-
-                    final activos = proyectos.where((p) => p.status).toList();
-
-                    if (nuevoOrden > activos.length) {
-                      setDialogState(() => errorOrden = 'Máximo: ${activos.length}');
-                      return;
-                    }
+                  onPressed: isSaving
+                      ? null
+                      : () async {
                     setDialogState(() => isSaving = true);
 
-                    final activosActualizados = await widget.homeViewModel.cambiarOrden(
+                    final activosActualizados =
+                    await widget.homeViewModel.cambiarOrden(
                       proyecto,
-                      nuevoOrden,
+                      ordenSeleccionado,
                       proyectos,
                     );
 
                     setState(() {
-                      // Reemplazar activos en la lista local con los valores actualizados
                       for (final actualizado in activosActualizados) {
-                        final i = proyectos.indexWhere((p) => p.clave == actualizado.clave);
+                        final i = proyectos
+                            .indexWhere((p) => p.clave == actualizado.clave);
                         if (i != -1) proyectos[i] = actualizado;
                       }
                       _reordenarLista();
@@ -574,87 +590,85 @@ class _HomePageState
           '${fecha.year}';
   }
 
-  Widget buildProyectoCard(Proyecto proyecto, int totalActivos) {
+  Widget buildProyectoCard(Proyecto proyecto, int totalActivos, int index) {
     final puedeEditar = usuario?.rol == 0 || usuario?.rol == 1;
+    final puedeArrastrar = puedeEditar && proyecto.status; // solo activos se reordenan
 
-    return Opacity(
-      opacity: proyecto.status ? 1.0 : 0.4,
-      child: GestureDetector(
-        onLongPress: puedeEditar ? () => _mostrarDialogoEdicion(proyecto) : null,
+    final cuerpo = Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (proyecto.status)
+          Container(
+            width: 8,
+            color: _colorParaOrden(proyecto.orden, totalActivos),
+          ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${proyecto.clave} - ${proyecto.nombre}',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  proyecto.fechaEntrega != null
+                      ? formatearFecha(proyecto.fechaEntrega!)
+                      : 'Sin fecha',
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    // Zona arrastrable: la tarjeta completa MENOS el badge de orden
+    final zonaArrastrable = puedeArrastrar
+        ? ReorderableDelayedDragStartListener(index: index, child: cuerpo)
+        : cuerpo;
+
+    final badge = puedeEditar
+        ? GestureDetector(
+      onTap: () => _mostrarDialogoEdicion(proyecto),
+      child: Container(
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF5285A6),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.green.shade200),
+        ),
+        child: const Icon(
+          Icons.edit_note_rounded,
+          color: Colors.white,
+          size: 20, // El tamaño en Icon se define con 'size' en lugar de 'fontSize'
+      ),
+
+    ),
+    )
+        : const SizedBox.shrink();
+
+    return KeyedSubtree(
+      key: ValueKey(proyecto.clave),
+      child: Opacity(
+        opacity: proyecto.status ? 1.0 : 0.4,
         child: Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           elevation: 3,
-          clipBehavior: Clip.antiAlias, // ← para que la franja respete el borde redondeado
+          clipBehavior: Clip.antiAlias,
           child: IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              if (proyecto.status)
-                Container(
-                  width: 8,
-                  color: _colorParaOrden(proyecto.orden, totalActivos),
-                ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${proyecto.clave} - ${proyecto.nombre}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              proyecto.fechaEntrega != null
-                                  ? formatearFecha(proyecto.fechaEntrega!)
-                                  : 'Sin fecha',
-                              style: const TextStyle(fontSize: 13, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (puedeEditar) ...[
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onLongPress: () => _mostrarDialogoCambiarOrden(proyecto),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.blue.shade200),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.drag_indicator, size: 14, color: Colors.blue),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${proyecto.orden}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+                Expanded(child: zonaArrastrable),
+                if (puedeEditar)
+                  Align(alignment: Alignment.center, child: badge),
+              ],
+            ),
           ),
         ),
       ),
@@ -790,7 +804,8 @@ class _HomePageState
         ),
       ),
 
-      body: Column(
+      body: SafeArea(
+      child: Column(
         children: [
           const SizedBox(height: 20),
           Row(
@@ -803,7 +818,7 @@ class _HomePageState
               if (esAdmin || esSupervisor) ...[
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.add_circle, color: Colors.blue, size: 32),
+                  icon: const Icon(Icons.add_circle, color: Color(0xFF4B4E6C), size: 32),
                   onPressed: () => _mostrarDialogoNuevoProyecto(),
                 ),
               ],
@@ -838,6 +853,7 @@ class _HomePageState
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -852,7 +868,7 @@ class _HomePageState
         ? proyectosOrdenados
         : proyectosOrdenados.where((p) => p.status).toList();
 
-    final totalActivos = proyectos.where((p) => p.status).length; // ← nuevo
+    final totalActivos = proyectos.where((p) => p.status).length;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -869,11 +885,39 @@ class _HomePageState
           ),
         ),
       )
-          : ListView.builder(
+          : ReorderableListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
+        buildDefaultDragHandles: false, // el arrastre se activa desde la tarjeta, no un ícono
         itemCount: proyectosMostrar.length,
         itemBuilder: (context, index) {
-          return buildProyectoCard(proyectosMostrar[index], totalActivos); // ← nuevo
+          return buildProyectoCard(proyectosMostrar[index], totalActivos, index);
+        },
+        onReorder: (oldIndex, newIndex) async {
+          if (newIndex > oldIndex) newIndex -= 1;
+
+          final proyectoMovido = proyectosMostrar[oldIndex];
+          if (!proyectoMovido.status) return; // los inactivos no se reordenan
+
+          // No permitir soltar un activo dentro de la zona de inactivos
+          final maxIndex = totalActivos - 1;
+          if (newIndex > maxIndex) newIndex = maxIndex;
+          if (newIndex == oldIndex) return;
+
+          final nuevoOrden = newIndex + 1;
+
+          final activosActualizados = await widget.homeViewModel.cambiarOrden(
+            proyectoMovido,
+            nuevoOrden,
+            proyectos,
+          );
+
+          setState(() {
+            for (final actualizado in activosActualizados) {
+              final i = proyectos.indexWhere((p) => p.clave == actualizado.clave);
+              if (i != -1) proyectos[i] = actualizado;
+            }
+            _reordenarLista();
+          });
         },
       ),
     );
