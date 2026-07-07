@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
+import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
@@ -19,6 +21,8 @@ class SessionGate extends StatefulWidget {
   final AprobacionValesViewModel aprobacionValesViewModel;
   final HomeViewModel homeViewModel;
   final HistorialValesViewModel historialValesViewModel;
+  final LiberacionValesViewModel liberacionValesViewModel;
+  final AdminDbViewModel adminDbViewModel;
 
 
   const SessionGate({
@@ -30,6 +34,8 @@ class SessionGate extends StatefulWidget {
     required this.aprobacionValesViewModel,
     required this.homeViewModel,
     required this.historialValesViewModel,
+    required this.liberacionValesViewModel,
+    required this.adminDbViewModel,
   });
 
   @override
@@ -93,6 +99,8 @@ class _SessionGateState
         aprobacionValesViewModel: widget.aprobacionValesViewModel,
         homeViewModel: widget.homeViewModel,
         historialValesViewModel: widget.historialValesViewModel,
+        liberacionValesViewModel: widget.liberacionValesViewModel,
+        adminDbViewModel: widget.adminDbViewModel,
       );
 
     }

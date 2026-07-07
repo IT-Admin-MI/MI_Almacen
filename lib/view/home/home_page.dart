@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:mi_almacen/constants/roles.dart';
+import 'package:mi_almacen/view/admin/admin_db_page.dart';
 import 'package:mi_almacen/view/vales/historial_vales_page.dart';
+import 'package:mi_almacen/view/vales/liberacionValesPage.dart';
 import 'package:mi_almacen/view/vales/vales_page.dart';
+import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
+import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
@@ -28,6 +33,10 @@ class HomePage extends StatefulWidget {
 
   final HistorialValesViewModel historialValesViewModel;
 
+  final LiberacionValesViewModel liberacionValesViewModel;
+
+  final AdminDbViewModel adminDbViewModel;
+
   const HomePage({
     super.key,
     required this.authService,
@@ -36,6 +45,8 @@ class HomePage extends StatefulWidget {
     required  this.aprobacionValesViewModel,
     required this.homeViewModel,
     required this.historialValesViewModel,
+    required this.liberacionValesViewModel,
+    required this.adminDbViewModel,
   });
 
   @override
@@ -336,114 +347,6 @@ class _HomePageState
     );
   }
 
-  Future<void> _mostrarDialogoCambiarOrden(Proyecto proyecto) async {
-    bool isSaving = false;
-
-    final activos = proyectos.where((p) => p.status).toList();
-    int ordenSeleccionado = proyecto.orden.clamp(1, activos.length);
-
-    final scrollController = FixedExtentScrollController(
-      initialItem: ordenSeleccionado - 1,
-    );
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text('Orden: ${proyecto.clave}'),
-              content: SizedBox(
-                height: 220,
-                width: 140,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CupertinoPicker(
-                      scrollController: scrollController,
-                      itemExtent: 44,
-                      diameterRatio: 1.2,
-                      onSelectedItemChanged: (index) {
-                        setDialogState(() => ordenSeleccionado = index + 1);
-                      },
-                      children: List.generate(activos.length, (i) {
-                        final numero = i + 1;
-                        final seleccionado = numero == ordenSeleccionado;
-                        return Center(
-                          child: Text(
-                            '$numero',
-                            style: TextStyle(
-                              fontSize: seleccionado ? 26 : 20,
-                              fontWeight:
-                              seleccionado ? FontWeight.bold : FontWeight.normal,
-                              color: seleccionado ? Colors.blue : Colors.black54,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                    // Franja que marca el ítem central seleccionado
-                    IgnorePointer(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          border: Border.symmetric(
-                            horizontal: BorderSide(
-                              color: Colors.blue.shade200,
-                              width: 1.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: isSaving
-                      ? null
-                      : () async {
-                    setDialogState(() => isSaving = true);
-
-                    final activosActualizados =
-                    await widget.homeViewModel.cambiarOrden(
-                      proyecto,
-                      ordenSeleccionado,
-                      proyectos,
-                    );
-
-                    setState(() {
-                      for (final actualizado in activosActualizados) {
-                        final i = proyectos
-                            .indexWhere((p) => p.clave == actualizado.clave);
-                        if (i != -1) proyectos[i] = actualizado;
-                      }
-                      _reordenarLista();
-                    });
-
-                    if (mounted) Navigator.pop(context);
-                  },
-                  child: isSaving
-                      ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                      : const Text('Guardar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   Future<void> _mostrarDialogoNuevoProyecto() async {
     final claveCtrl = TextEditingController();
     final nombreCtrl = TextEditingController();
@@ -591,7 +494,7 @@ class _HomePageState
   }
 
   Widget buildProyectoCard(Proyecto proyecto, int totalActivos, int index) {
-    final puedeEditar = usuario?.rol == 0 || usuario?.rol == 1;
+    final puedeEditar = usuario?.rol == 0;
     final puedeArrastrar = puedeEditar && proyecto.status; // solo activos se reordenan
 
     final cuerpo = Row(
@@ -756,9 +659,7 @@ class _HomePageState
                       leading: const Icon(Icons.history),
                       title: const Text('Historial de Vales'),
                       onTap: () {
-
                         Navigator.pop(context);
-
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -767,11 +668,11 @@ class _HomePageState
                             ),
                           ),
                         );
-
                       },
                     ),
 
-                    if (usuario != null && (usuario!.rol == 0 || usuario!.rol == 1))
+                    // Solo Administrador y Compras
+                    if (usuario != null && (usuario!.rol == 0 || usuario?.rol == 1))
                       ListTile(
                         leading: const Icon(Icons.fact_check),
                         title: const Text('Aprobación de Vales'),
@@ -788,7 +689,42 @@ class _HomePageState
                         },
                       ),
 
-                    // ← Cerrar sesión al final del ListView, no fuera de él
+                    // Solo Administrador y Almacén
+                    if (usuario != null && (usuario?.rol == 0 || usuario?.rol == 3))
+                      ListTile(
+                        leading: const Icon(Icons.inventory),
+                        title: const Text('Liberación de Vales'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => LiberacionValesPage(
+                                viewModel: widget.liberacionValesViewModel,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+                    // Solo Administrador
+                    if (usuario != null && usuario?.rol == Roles.administrador)
+                      ListTile(
+                        leading: const Icon(Icons.admin_panel_settings),
+                        title: const Text('Administrar base de datos'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AdminDbPage(
+                                viewModel: widget.adminDbViewModel,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
                     const Divider(),
 
                     ListTile(
@@ -815,7 +751,7 @@ class _HomePageState
                 'Lista de proyectos',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-              if (esAdmin || esSupervisor) ...[
+              if (esAdmin) ...[
                 const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.add_circle, color: Color(0xFF4B4E6C), size: 32),

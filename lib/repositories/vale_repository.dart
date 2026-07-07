@@ -33,5 +33,8 @@ abstract class ValeRepository {
   Future<List<Vale>> obtenerHistorial({required int rol, required String usuario, required String departamento,
   });
 
+  Future<List<Vale>> getPendientesLiberacion();
+
+  Future<void> liberarVale(String valeId);
 
 }

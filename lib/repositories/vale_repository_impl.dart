@@ -26,6 +26,11 @@ class ValeRepositoryImpl
     await databaseHelper.database;
 
     await db.transaction((txn) async {
+      for (final item in vale.items) {
+        print('====================');
+        print(item.material.descripcion);
+        print('Comentario: ${item.comentarioVale}');
+      }
 
       await txn.insert(
         'vales',
@@ -50,9 +55,22 @@ class ValeRepositoryImpl
             item.cantidad,
             'unidad':
             item.unidad,
+            'comentario_vale':
+            item.comentarioVale,
           },
         );
+
+        final prueba = await txn.query(
+          'vale_items',
+          where: 'vale_id = ? AND material_codigo = ?',
+          whereArgs: [vale.id, item.material.codigo],
+        );
+
+        print(prueba);
       }
+
+
+
 
     });
   }
@@ -98,6 +116,8 @@ class ValeRepositoryImpl
             item.cantidad,
             'unidad':
             item.unidad,
+            'comentario_vale':
+            item.comentarioVale,
           },
         );
       }
@@ -370,6 +390,8 @@ class ValeRepositoryImpl
         unidad:
         item['unidad']
         as String,
+        comentarioVale:
+        item['comentario_vale'] as String? ?? '',
       );
     }).toList();
 
@@ -458,14 +480,14 @@ class ValeRepositoryImpl
         break;
 
     // Almacenista
-      case 3:
+        //case 3:
 
-        result = await db.query(
-          'vales',
-          orderBy: 'fecha_creacion DESC',
-        );
+    // result = await db.query(
+    //    'vales',
+    //    orderBy: 'fecha_creacion DESC',
+        //  );
 
-        break;
+    //break;
 
     // Empleado
       default:
@@ -486,5 +508,42 @@ class ValeRepositoryImpl
 
     print('Registros SQL: ${result.length}');
     return lista;
+  }
+
+  @override
+  Future<List<Vale>> getPendientesLiberacion() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'vales',
+      where: 'estado = ? AND liberado = ?',
+      whereArgs: [1, 0],
+      orderBy: 'fecha_creacion DESC',
+    );
+
+    final lista = <Vale>[];
+
+    for (final row in result) {
+      lista.add(await _mapVale(db, row));
+    }
+
+    return lista;
+  }
+
+  @override
+  Future<void> liberarVale(String valeId) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'vales',
+      {
+        'liberado': 1,
+        'sync_status': 0,
+      },
+      where: 'id = ?',
+      whereArgs: [valeId],
+    );
   }
 }

@@ -51,6 +51,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
           proyecto: item.proyecto,
           cantidad: item.cantidad,
           unidad: item.unidad,
+              comentarioVale: item.comentarioVale,
         ),
       );
     }
@@ -78,6 +79,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
       comentarioValidacion: original.comentarioValidacion,
       syncStatus: original.syncStatus,
       items: updatedItems,
+      liberado: original.liberado,
     );
   }
 
@@ -192,7 +194,6 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                         'Código: ${editable.material.codigo}'),
 
                                     const SizedBox(height: 8),
-
                                     /// PROYECTO EDITABLE
                                     DropdownButtonFormField<String>(
                                       value: editable.proyecto?.clave,
@@ -219,6 +220,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                             proyecto: proyecto,
                                             cantidad: editable.cantidad,
                                             unidad: editable.unidad,
+                                            comentarioVale: editable.comentarioVale,
                                           );
                                         });
                                       },
@@ -250,6 +252,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                                     value) ??
                                                     editable.cantidad,
                                                 unidad: editable.unidad,
+                                                comentarioVale: editable.comentarioVale,
                                               );
                                         });
                                       },
@@ -258,7 +261,6 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                     const SizedBox(height: 8),
 
                                     /// UNIDAD
-                                    // Unidad
                                     SizedBox(
                                       width: 100,
                                       child: DropdownButtonFormField<String>(
@@ -291,6 +293,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                                   cantidad:
                                                   editable.cantidad,
                                                   unidad: value,
+                                                  comentarioVale: editable.comentarioVale,
                                                 );
                                           });
                                         },
@@ -298,6 +301,25 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                                     ),
 
                                     const SizedBox(height: 10),
+                                    TextFormField(
+                                      initialValue: editable.comentarioVale,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Comentario',
+                                        border: OutlineInputBorder(),
+                                      ),
+                                      maxLines: 2,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _editableItems[key] = ValeItem(
+                                            material: editable.material,
+                                            proyecto: editable.proyecto,
+                                            cantidad: editable.cantidad,
+                                            unidad: editable.unidad,
+                                            comentarioVale: value,
+                                          );
+                                        });
+                                      },
+                                    ),
 
 
                                     /// ELIMINAR

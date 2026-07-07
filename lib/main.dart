@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mi_almacen/repositories/admin_repository.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
+import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
+import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
@@ -99,6 +102,8 @@ class MyApp extends StatelessWidget {
       databaseHelper: databaseHelper,
     );
 
+    final adminRepository = AdminRepository(databaseHelper: databaseHelper);
+
 
     final authService =
     AuthServiceImpl(
@@ -136,6 +141,12 @@ class MyApp extends StatelessWidget {
       valeService: valeService,
       syncService: syncService,
     );
+
+    final liberacionValeViewModel =
+    LiberacionValesViewModel(
+        valeRepository: valeRepository,
+        proyectoRepository: proyectoRepository,
+        firebaseService: firebaseService);
 
 
     final aprobacionValesViewModel =
@@ -175,6 +186,16 @@ class MyApp extends StatelessWidget {
       authService,
     );
 
+    final adminDbViewModel = AdminDbViewModel(
+      adminRepository: adminRepository,
+      valeRepository: valeRepository,
+      proyectoRepository: proyectoRepository,
+      valeSyncService: valeSyncService,
+      materialRepository: materialRepository,
+    );
+
+
+
     // ==========================
     // APP
     // ==========================
@@ -193,6 +214,8 @@ class MyApp extends StatelessWidget {
         aprobacionValesViewModel: aprobacionValesViewModel,
         homeViewModel: homeViewModel,
         historialValesViewModel: historialValeViewModel,
+        liberacionValesViewModel: liberacionValeViewModel,
+        adminDbViewModel: adminDbViewModel,
       ),
 
       routes: {
@@ -211,6 +234,8 @@ class MyApp extends StatelessWidget {
               aprobacionValesViewModel: aprobacionValesViewModel,
               homeViewModel: homeViewModel,
               historialValesViewModel: historialValeViewModel,
+              liberacionValesViewModel: liberacionValeViewModel,
+              adminDbViewModel: adminDbViewModel,
             ),
       },
     );

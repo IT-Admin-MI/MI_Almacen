@@ -187,6 +187,7 @@ class ValeViewModel extends ChangeNotifier {
       DateTime.now(),
       syncStatus:
       vale.syncStatus,
+      liberado: 0,
     );
 
     await valeRepository.update(
@@ -216,6 +217,7 @@ class ValeViewModel extends ChangeNotifier {
       DateTime.now(),
       syncStatus:
       vale.syncStatus,
+      liberado: 0,
     );
 
     await valeRepository.update(
@@ -439,6 +441,8 @@ class ValeViewModel extends ChangeNotifier {
         estado:
         ValeEstado.pendiente,
 
+        liberado: 0,
+
         syncStatus: 0,
 
         items:
@@ -487,6 +491,13 @@ class ValeViewModel extends ChangeNotifier {
 
       notifyListeners();
     }
+  }
+  void actualizarComentario(
+      ValeItem item,
+      String comentario,
+      ) {
+    item.comentarioVale = comentario;
+    notifyListeners();
   }
 
 }

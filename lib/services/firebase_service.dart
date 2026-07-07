@@ -22,6 +22,10 @@ abstract class FirebaseService {
 
   Future<void> actualizarProyecto(Proyecto proyecto);
 
+  Future<void> actualizarLiberacionVale({
+    required String id,
+    required int liberado,
+  });
 
 
 }

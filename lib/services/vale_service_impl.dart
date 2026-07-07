@@ -118,6 +118,7 @@ class ValeServiceImpl implements ValeService {
         'proyecto_nombre': item.proyecto?.nombre,
         'cantidad': item.cantidad,
         'unidad': item.unidad,
+        'comentario_vale': item.comentarioVale,
       });
     }
 

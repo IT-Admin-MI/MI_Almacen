@@ -113,6 +113,10 @@ class AuthServiceImpl implements AuthService {
     final prefs =
     await SharedPreferences.getInstance();
 
+
+    print('PREF KEYS: ${prefs.getKeys()}');
+    print('SESSION: ${prefs.getString(sessionKey)}');
+
     return prefs.containsKey(
       sessionKey,
     );

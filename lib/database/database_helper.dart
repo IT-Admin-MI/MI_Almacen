@@ -29,7 +29,7 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
 
     final dbPath = await getDatabasesPath();
-
+    print('RUTA BASE DE DATOS: $dbPath');
     final path = join(
       dbPath,
       DatabaseConstants.dbName,

@@ -170,6 +170,7 @@ class AprobacionValesViewModel
       validadoPor: vale.validadoPor,
       comentarioValidacion: vale.comentarioValidacion,
       syncStatus: vale.syncStatus,
+      liberado: vale.liberado,
     );
 
     notifyListeners();

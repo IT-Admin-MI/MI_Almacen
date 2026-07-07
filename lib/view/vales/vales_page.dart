@@ -173,24 +173,29 @@ class _ValesPageState
           Expanded(
             child: viewModel.items.isEmpty
                 ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
-                    'assets/images/logo_bn.png',
-                    width: 150,
-                    color: Colors.grey.withOpacity(0.4),
-                    colorBlendMode: BlendMode.modulate,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Sin materiales agregados',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (viewModel.resultadosBusqueda.isEmpty) ...[
+                      Image.asset(
+                        'assets/images/logo_bn.png',
+                        width: 100,
+                        color: Colors.grey.withOpacity(0.4),
+                        colorBlendMode: BlendMode.modulate,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    const Text(
+                      'Sin materiales agregados',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )
                 : ListView.builder(
@@ -201,7 +206,6 @@ class _ValesPageState
               },
             ),
           ),
-
           // ── BOTÓN CREAR VALE ───────────────────────────
           SafeArea(
             top: false,
@@ -368,6 +372,19 @@ class _ValesPageState
               }).toList(),
               onChanged: (proyecto) {
                 viewModel.actualizarProyecto(item, proyecto);
+              },
+            ),
+            const SizedBox(height: 10),
+
+            TextFormField(
+              initialValue: item.comentarioVale,
+              decoration: const InputDecoration(
+                labelText: 'Comentario',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+              onChanged: (value) {
+                viewModel.actualizarComentario(item, value);
               },
             ),
           ],

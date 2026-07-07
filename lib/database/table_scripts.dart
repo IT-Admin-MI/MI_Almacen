@@ -41,7 +41,8 @@ CREATE TABLE vales(
     fecha_validacion TEXT,
     validado_por TEXT,
     comentario_validacion TEXT,
-    sync_status INTEGER NOT NULL
+    sync_status INTEGER NOT NULL,
+    liberado INTEGER NOT NULL
 );
 ''';
 
@@ -54,7 +55,8 @@ CREATE TABLE vale_items(
     proyecto_clave TEXT,
     proyecto_nombre TEXT,
     cantidad REAL NOT NULL,
-    unidad TEXT NOT NULL
+    unidad TEXT NOT NULL,
+    comentario_vale TEXT
 );
 ''';
 

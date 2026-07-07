@@ -1,0 +1,410 @@
+import 'package:flutter/material.dart';
+import 'package:mi_almacen/models/Proyecto.dart';
+import 'package:mi_almacen/models/Vale.dart';
+import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
+
+class LiberacionValesPage extends StatefulWidget {
+  final LiberacionValesViewModel viewModel;
+
+  const LiberacionValesPage({
+    super.key,
+    required this.viewModel,
+  });
+
+  @override
+  State<LiberacionValesPage> createState() =>
+      _LiberacionValesPageState();
+}
+
+class _LiberacionValesPageState
+    extends State<LiberacionValesPage> {
+
+  bool _refrescando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_refresh);
+    widget.viewModel.cargarVales();
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return AnimatedBuilder(
+
+      animation: widget.viewModel,
+
+      builder: (context, _) {
+
+        final vales = widget.viewModel.vales;
+        final proyectos = widget.viewModel.proyectos;
+        final proyectoSeleccionado = widget.viewModel.proyectoSeleccionado;
+
+        return Scaffold(
+
+          appBar: AppBar(
+            title: const Text("Liberación de Vales"),
+          ),
+
+          body: widget.viewModel.cargando && !_refrescando
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async {
+
+                setState(() {
+                  _refrescando = true;
+                });
+
+                await widget.viewModel.actualizar();
+
+                setState(() {
+                  _refrescando = false;
+                });
+
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+
+                  // FILTRO PROYECTO
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: DropdownButtonFormField<Proyecto?>(
+                        value: proyectos
+                            .where((p) => p.clave == proyectoSeleccionado?.clave)
+                            .firstOrNull,
+                        decoration: const InputDecoration(
+                          labelText: 'Proyecto',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: [
+                          const DropdownMenuItem<Proyecto?>(
+                            value: null,
+                            child: Text("Todos"),
+                          ),
+                          ...proyectos.map(
+                                (p) => DropdownMenuItem<Proyecto?>(
+                              value: p,
+                              child: Text('${p.clave}'),
+                            ),
+                          ),
+                        ],
+                        onChanged: widget.viewModel.seleccionarProyecto,
+                      ),
+                    ),
+                  ),
+
+                  // FILTRO FECHAS
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.date_range),
+                              label: Text(
+                                widget.viewModel.fechaInicio == null
+                                    ? 'Desde'
+                                    : '${widget.viewModel.fechaInicio!.day}/${widget.viewModel.fechaInicio!.month}/${widget.viewModel.fechaInicio!.year}',
+                              ),
+                              onPressed: () => _seleccionarFecha(desde: true),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.date_range),
+                              label: Text(
+                                widget.viewModel.fechaFin == null
+                                    ? 'Hasta'
+                                    : '${widget.viewModel.fechaFin!.day}/${widget.viewModel.fechaFin!.month}/${widget.viewModel.fechaFin!.year}',
+                              ),
+                              onPressed: () => _seleccionarFecha(desde: false),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // LIMPIAR FILTROS
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.clear),
+                          label: const Text('Limpiar filtros'),
+                          onPressed: widget.viewModel.limpiarFiltros,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  vales.isEmpty
+                      ? SliverFillRemaining(
+                    child: _buildEmpty(),
+                  )
+                      : SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                        final vale = vales[index];
+                        return _buildValeCard(vale);
+                      },
+                      childCount: vales.length,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _seleccionarFecha({
+    required bool desde,
+  }) async {
+
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: desde
+          ? (widget.viewModel.fechaInicio ?? DateTime.now())
+          : (widget.viewModel.fechaFin ?? DateTime.now()),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (fecha == null) return;
+
+    if (desde) {
+      widget.viewModel.seleccionarFechaInicio(fecha);
+    } else {
+      widget.viewModel.seleccionarFechaFin(fecha);
+    }
+  }
+
+  Widget _buildEmpty() {
+
+    return Center(
+
+      child: Column(
+
+        mainAxisSize: MainAxisSize.min,
+
+        children: [
+
+          Opacity(
+
+            opacity: .15,
+
+            child: Image.asset(
+              'assets/images/logo_bn.png',
+              width: 180,
+            ),
+
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            "No hay vales pendientes de liberar",
+            style: TextStyle(
+              color: Colors.grey,
+              fontSize: 18,
+            ),
+          )
+
+        ],
+      ),
+    );
+  }
+
+  Widget _buildValeCard(Vale vale) {
+
+    return Card(
+
+      margin: const EdgeInsets.all(8),
+
+      child: ExpansionTile(
+
+        title: Text("Vale ${vale.id}"),
+
+        subtitle: Text(
+          "${vale.usuarioNombre}\n${vale.fechaCreacion.day}/${vale.fechaCreacion.month}/${vale.fechaCreacion.year}",
+        ),
+
+        children: [
+
+          const Divider(),
+
+          Padding(
+
+            padding: const EdgeInsets.all(12),
+
+            child: Column(
+
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
+
+              children: [
+
+                const Text(
+
+                  "Materiales",
+
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+
+                ),
+
+                const SizedBox(height: 10),
+
+                ...vale.items.map(
+
+                      (item) {
+
+                    return Card(
+
+                      child: ListTile(
+
+                        title: Text(
+                          item.material.descripcion,
+                        ),
+
+                        subtitle: Column(
+
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+
+                          children: [
+
+                            Text(
+                                "Código: ${item.material.codigo}"),
+
+                            Text(
+                                "Cantidad: ${item.cantidad} ${item.unidad}"),
+
+                            Text(
+                                "Proyecto: ${item.proyecto?.clave ?? '-'}"),
+
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+
+                  width: double.infinity,
+
+                  child: ElevatedButton.icon(
+
+                    icon: const Icon(Icons.inventory),
+
+                    label: const Text(
+                        "Liberar Vale"),
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                      Colors.green,
+                      foregroundColor:
+                      Colors.white,
+                    ),
+
+                    onPressed: () =>
+                        _confirmarLiberacion(vale),
+
+                  ),
+                )
+
+              ],
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmarLiberacion(
+      Vale vale) async {
+
+    final confirmar = await showDialog<bool>(
+
+      context: context,
+
+      builder: (_) {
+
+        return AlertDialog(
+
+          title:
+          const Text("Liberar Vale"),
+
+          content: Text(
+              "¿Desea liberar el vale ${vale.id}?"),
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                Navigator.pop(
+                    context, false);
+
+              },
+
+              child:
+              const Text("Cancelar"),
+
+            ),
+
+            ElevatedButton(
+
+              onPressed: () {
+
+                Navigator.pop(
+                    context, true);
+
+              },
+
+              child:
+              const Text("Liberar"),
+
+            )
+
+          ],
+        );
+      },
+    );
+
+    if (confirmar == true) {
+
+      await widget.viewModel
+          .liberarVale(vale.id);
+
+    }
+  }
+}

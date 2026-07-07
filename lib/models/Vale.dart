@@ -13,6 +13,7 @@ class Vale {
   final int syncStatus;
   final String? departamento;
   final List<ValeItem> items;
+  final int liberado;
 
   Vale({
     required this.id,
@@ -26,6 +27,7 @@ class Vale {
     this.validadoPor,
     this.comentarioValidacion,
     this.syncStatus = 0,
+    required this.liberado,
   });
 
   Map<String, dynamic> toMap() {
@@ -42,6 +44,7 @@ class Vale {
       'validado_por': validadoPor,
       'comentario_validacion': comentarioValidacion,
       'sync_status': syncStatus,
+      'liberado':liberado,
     };
   }
 
@@ -95,6 +98,8 @@ class Vale {
       map['sync_status']
       as int? ??
           0,
+      liberado:
+      map['liberado'] as int,
     );
   }
 }

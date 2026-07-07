@@ -86,58 +86,35 @@ class FirebaseServiceImpl implements FirebaseService {
 
     }).toList();
   }
-
   @override
-  Future<void> guardarVale(
-      Vale vale,
-      ) async {
+  Future<void> guardarVale(Vale vale) async {
+    final docRef = firestore.collection('vales').doc(vale.id);
 
-    final docRef =
-    firestore
-        .collection('vales')
-        .doc(vale.id);
+    await docRef.set(vale.toMap());
 
-    await docRef.set(
-      vale.toMap(),
-    );
+    // Limpiar items anteriores para evitar duplicados al re-sincronizar
+    final itemsExistentes = await docRef.collection('items').get();
+    final batch = firestore.batch();
 
-    final batch =
-    firestore.batch();
+    for (final doc in itemsExistentes.docs) {
+      batch.delete(doc.reference);
+    }
 
     for (final item in vale.items) {
-
-      final itemRef =
-      docRef
-          .collection('items')
-          .doc();
-
-      batch.set(
-        itemRef,
-        {
-          'material_codigo':
-          item.material.codigo,
-
-          'material_descripcion':
-          item.material.descripcion,
-
-          'proyecto_clave':
-          item.proyecto?.clave,
-
-          'proyecto_nombre':
-          item.proyecto?.nombre,
-
-          'cantidad':
-          item.cantidad,
-
-          'unidad':
-          item.unidad,
-        },
-      );
+      final itemRef = docRef.collection('items').doc();
+      batch.set(itemRef, {
+        'material_codigo': item.material.codigo,
+        'material_descripcion': item.material.descripcion,
+        'proyecto_clave': item.proyecto?.clave,
+        'proyecto_nombre': item.proyecto?.nombre,
+        'cantidad': item.cantidad,
+        'unidad': item.unidad,
+        'comentario_vale': item.comentarioVale,
+      });
     }
 
     await batch.commit();
   }
-
   @override
   Future<List<Vale>> obtenerVales() async {
 
@@ -190,6 +167,9 @@ class FirebaseServiceImpl implements FirebaseService {
 
             unidad:
             item['unidad'].toString(),
+
+            comentarioVale:
+            item['comentario_vale']?.toString() ?? '',
           ),
         );
       }
@@ -234,6 +214,9 @@ class FirebaseServiceImpl implements FirebaseService {
           data['sync_status'] ?? 1,
 
           items: items,
+
+          liberado:
+          data['liberado'],
         ),
       );
     }
@@ -301,6 +284,9 @@ class FirebaseServiceImpl implements FirebaseService {
             cantidad: (item['cantidad'] as num).toDouble(),
 
             unidad: item['unidad'].toString(),
+
+            comentarioVale:
+            item['comentario_vale']?.toString() ?? '',
           );
 
           items.add(valeItem);
@@ -353,6 +339,9 @@ class FirebaseServiceImpl implements FirebaseService {
           data['sync_status'] ?? 0,
 
           items: items,
+
+          liberado:
+          data['liberado'] ?? 0,
         ),
       );
 
@@ -393,5 +382,19 @@ class FirebaseServiceImpl implements FirebaseService {
           '${proyecto.fechaEntrega!.day.toString().padLeft(2, '0')}'
           : null,
     }, SetOptions(merge: true)); // ← set con merge, no update
+  }
+
+  @override
+  Future<void> actualizarLiberacionVale({
+    required String id,
+    required int liberado,
+  }) async {
+
+    await firestore
+        .collection('vales')
+        .doc(id)
+        .update({
+      'liberado': liberado,
+    });
   }
 }
