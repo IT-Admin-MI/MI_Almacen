@@ -472,7 +472,12 @@ class _AdminDbPageState extends State<AdminDbPage> {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Administrar base de datos'),
+          centerTitle: true,
+          title: Image.asset(
+            'assets/images/logo_ext.png',
+            height: 40,
+            fit: BoxFit.contain,
+          ),
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Vales'),
@@ -485,40 +490,50 @@ class _AdminDbPageState extends State<AdminDbPage> {
           animation: widget.viewModel,
           builder: (context, _) {
             if (widget.viewModel.cargando) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
             }
 
             if (widget.viewModel.error != null) {
-              return Center(child: Text(widget.viewModel.error!));
+              return Center(
+                child: Text(widget.viewModel.error!),
+              );
             }
 
-            return TabBarView(
+            return Column(
               children: [
-                _listaGenerica(
-                  filas: widget.viewModel.vales,
-                  campos: _camposVale,
-                  tituloClave: 'id',
-                  subtituloClave: 'usuario_nombre',
-                  onGuardar: widget.viewModel.guardarVale,
-                  onRefresh: widget.viewModel.sincronizarVales,
-                ),
-                _listaGenerica(
-                  filas: widget.viewModel.valeItems,
-                  campos: _camposValeItem,
-                  tituloClave: 'material_descripcion',
-                  subtituloClave: 'vale_id',
-                  onGuardar: widget.viewModel.guardarValeItem,
-                  onRefresh: widget.viewModel.cargarTodo,
-                  materiales: widget.viewModel.materiales,
-                  proyectosCatalogo: widget.viewModel.proyectosCatalogo,
-                ),
-                _listaGenerica(
-                  filas: widget.viewModel.proyectos,
-                  campos: _camposProyecto,
-                  tituloClave: 'clave',
-                  subtituloClave: 'nombre',
-                  onGuardar: widget.viewModel.guardarProyecto,
-                  onRefresh: widget.viewModel.sincronizarProyectos,
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _listaGenerica(
+                        filas: widget.viewModel.vales,
+                        campos: _camposVale,
+                        tituloClave: 'id',
+                        subtituloClave: 'usuario_nombre',
+                        onGuardar: widget.viewModel.guardarVale,
+                        onRefresh: widget.viewModel.sincronizarVales,
+                      ),
+                      _listaGenerica(
+                        filas: widget.viewModel.valeItems,
+                        campos: _camposValeItem,
+                        tituloClave: 'material_descripcion',
+                        subtituloClave: 'vale_id',
+                        onGuardar: widget.viewModel.guardarValeItem,
+                        onRefresh: widget.viewModel.cargarTodo,
+                        materiales: widget.viewModel.materiales,
+                        proyectosCatalogo: widget.viewModel.proyectosCatalogo,
+                      ),
+                      _listaGenerica(
+                        filas: widget.viewModel.proyectos,
+                        campos: _camposProyecto,
+                        tituloClave: 'clave',
+                        subtituloClave: 'nombre',
+                        onGuardar: widget.viewModel.guardarProyecto,
+                        onRefresh: widget.viewModel.sincronizarProyectos,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             );

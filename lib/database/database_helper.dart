@@ -56,10 +56,6 @@ class DatabaseHelper {
     await db.execute(createValeItemsTable);
     await db.execute(createHistorialValesTable);
 
-    await db.execute(createComprasTable);
-    await db.execute(createCompraItemsTable);
-    await db.execute(createHistorialComprasTable);
-
     await db.execute(createAppConfigTable);
 
     await db.execute(createMaterialesDescripcionIndex);
@@ -68,15 +64,15 @@ class DatabaseHelper {
     await db.execute(createValesFechaIndex);
     await db.execute(createValesEstatusIndex);
 
-    await db.execute(createComprasEstadoIndex);
+
+
+    await db.execute(createComprasTable);
+    await db.execute(createCompraItemsTable);
+    await db.execute(createHistorialComprasTable);
+
     await db.execute(createComprasFechaSolicitudIndex);
+    await db.execute(createComprasEstadoIndex);
+    await db.execute(createCompraItemsCompraIdIndex);
 
-    await db.execute(createHistorialValeFechaIndex);
-    await db.execute(createHistorialCompraFechaIndex);
-
-    //await db.execute(createMaterialSyncIndex);
-    //await db.execute(createProyectoSyncIndex);
-    //await db.execute(createValeSyncIndex);
-    //await db.execute(createCompraSyncIndex);
   }
 }

@@ -56,7 +56,12 @@ class _LiberacionValesPageState
         return Scaffold(
 
           appBar: AppBar(
-            title: const Text("Liberación de Vales"),
+            centerTitle: true,
+            title: Image.asset(
+              'assets/images/logo_ext.png',
+              height: 40,
+              fit: BoxFit.contain,
+            ),
           ),
 
           body: widget.viewModel.cargando && !_refrescando
@@ -79,7 +84,17 @@ class _LiberacionValesPageState
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-
+                  SliverToBoxAdapter(
+                    child: const Center(
+                      child: Text(
+                        'Liberación de vales',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                   // FILTRO PROYECTO
                   SliverToBoxAdapter(
                     child: Padding(

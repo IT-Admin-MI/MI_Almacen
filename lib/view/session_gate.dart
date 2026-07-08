@@ -7,7 +7,7 @@ import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/login_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
-
+import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
 import '../services/auth_service.dart';
 import 'home/home_page.dart';
 import 'login/login_page.dart';
@@ -23,7 +23,7 @@ class SessionGate extends StatefulWidget {
   final HistorialValesViewModel historialValesViewModel;
   final LiberacionValesViewModel liberacionValesViewModel;
   final AdminDbViewModel adminDbViewModel;
-
+  final CompraViewModel compraViewModel;
 
   const SessionGate({
     super.key,
@@ -36,6 +36,7 @@ class SessionGate extends StatefulWidget {
     required this.historialValesViewModel,
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
+    required this.compraViewModel,
   });
 
   @override
@@ -101,6 +102,7 @@ class _SessionGateState
         historialValesViewModel: widget.historialValesViewModel,
         liberacionValesViewModel: widget.liberacionValesViewModel,
         adminDbViewModel: widget.adminDbViewModel,
+        compraViewModel: widget.compraViewModel,
       );
 
     }

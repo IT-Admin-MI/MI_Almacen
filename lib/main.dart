@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mi_almacen/repositories/admin_repository.dart';
+import 'package:mi_almacen/repositories/compra_repository_impl.dart';
+import 'package:mi_almacen/services/compra_service.dart';
+import 'package:mi_almacen/services/compra_service_impl.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 
@@ -76,7 +80,6 @@ class MyApp extends StatelessWidget {
     // ==========================
 
 
-
     final usuarioRepository = UsuarioRepositoryImpl(
       databaseHelper: databaseHelper,
     );
@@ -130,6 +133,8 @@ class MyApp extends StatelessWidget {
       driveService: DriveServiceImpl(),
       valeSyncService: valeSyncService,
     );
+
+
 
     // ==========================
     // VIEWMODELS
@@ -194,7 +199,19 @@ class MyApp extends StatelessWidget {
       materialRepository: materialRepository,
     );
 
+    final compraRepository = CompraRepositoryImpl(
+      databaseHelper: databaseHelper,
+    );
 
+    final compraService = CompraServiceImpl(
+      compraRepository: compraRepository,
+    );
+
+    final compraViewModel = CompraViewModel(
+      compraService: compraService,
+      materialRepository: materialRepository,
+      proyectoRepository: proyectoRepository,
+    );
 
     // ==========================
     // APP
@@ -216,6 +233,7 @@ class MyApp extends StatelessWidget {
         historialValesViewModel: historialValeViewModel,
         liberacionValesViewModel: liberacionValeViewModel,
         adminDbViewModel: adminDbViewModel,
+        compraViewModel: compraViewModel,
       ),
 
       routes: {
@@ -236,6 +254,7 @@ class MyApp extends StatelessWidget {
               historialValesViewModel: historialValeViewModel,
               liberacionValesViewModel: liberacionValeViewModel,
               adminDbViewModel: adminDbViewModel,
+              compraViewModel: compraViewModel,
             ),
       },
     );

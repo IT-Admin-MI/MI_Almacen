@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/constants/roles.dart';
 import 'package:mi_almacen/view/admin/admin_db_page.dart';
+import 'package:mi_almacen/view/compras/compras_page.dart';
 import 'package:mi_almacen/view/vales/historial_vales_page.dart';
 import 'package:mi_almacen/view/vales/liberacionValesPage.dart';
 import 'package:mi_almacen/view/vales/vales_page.dart';
@@ -9,6 +10,7 @@ import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
 import '../../viewmodels/home_viewmodel.dart';
 
@@ -33,6 +35,8 @@ class HomePage extends StatefulWidget {
 
   final HistorialValesViewModel historialValesViewModel;
 
+  final CompraViewModel compraViewModel;
+
   final LiberacionValesViewModel liberacionValesViewModel;
 
   final AdminDbViewModel adminDbViewModel;
@@ -47,6 +51,7 @@ class HomePage extends StatefulWidget {
     required this.historialValesViewModel,
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
+    required this.compraViewModel,
   });
 
   @override
@@ -724,6 +729,21 @@ class _HomePageState
                           );
                         },
                       ),
+                    ListTile(
+                      leading: const Icon(Icons.add_shopping_cart),
+                      title: const Text('Nueva Compra'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ComprasPage(
+                              viewModel: widget.compraViewModel,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
 
                     const Divider(),
 
@@ -739,26 +759,25 @@ class _HomePageState
           ),
         ),
       ),
+      floatingActionButton: esAdmin
+          ? FloatingActionButton(
+        onPressed: _mostrarDialogoNuevoProyecto,
+        backgroundColor: const Color(0xFF4B4E6C),
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
 
       body: SafeArea(
       child: Column(
         children: [
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Lista de proyectos',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              if (esAdmin) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: Color(0xFF4B4E6C), size: 32),
-                  onPressed: () => _mostrarDialogoNuevoProyecto(),
-                ),
-              ],
-            ],
+          const Text(
+            'Lista de proyectos',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           // ← Todo dentro del AnimatedBuilder
           AnimatedBuilder(

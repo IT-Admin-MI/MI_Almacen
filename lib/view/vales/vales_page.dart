@@ -66,16 +66,28 @@ class _ValesPageState
       ) {
 
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text('Creación de vales'),
+        centerTitle: true,
+
+        title: Image.asset(
+          'assets/images/logo_ext.png',
+          height: 40,
+          fit: BoxFit.contain,
+        ),
       ),
 
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
-          // ── ÁREA SUPERIOR ──────────────────────────────
+      const Center(
+        child: Text(
+          'Crear vale',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),          // ── ÁREA SUPERIOR ──────────────────────────────
           ConstrainedBox(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(context).size.height * 0.42,

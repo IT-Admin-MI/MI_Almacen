@@ -59,8 +59,14 @@ class _HistorialValesPageState
         print("Vales en pantalla: ${vales.length}");
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Historial de Vales'),
+            centerTitle: true,
+            title: Image.asset(
+              'assets/images/logo_ext.png',
+              height: 40,
+              fit: BoxFit.contain,
+            ),
           ),
+
           body: widget.viewModel.cargando
               ? const Center(child: CircularProgressIndicator())
               : SafeArea(
@@ -69,6 +75,17 @@ class _HistorialValesPageState
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
+            SliverToBoxAdapter(
+                child: const Center(
+                  child: Text(
+                    'Historial de vales',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(12),

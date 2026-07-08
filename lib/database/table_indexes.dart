@@ -18,24 +18,9 @@ CREATE INDEX idx_vales_estado
 ON vales(estado)
 ''';
 
-const createComprasEstadoIndex = '''
-CREATE INDEX idx_compras_estado
-ON compras(estado)
-''';
-
-const createComprasFechaSolicitudIndex = '''
-CREATE INDEX idx_compras_fecha_solicitud
-ON compras(fecha_solicitud)
-''';
-
 const createHistorialValeFechaIndex = '''
 CREATE INDEX idx_historial_vale_fecha
 ON historial_vales(fecha)
-''';
-
-const createHistorialCompraFechaIndex = '''
-CREATE INDEX idx_historial_compra_fecha
-ON historial_compras(fecha)
 ''';
 
 const createMaterialSyncIndex = '''
@@ -53,7 +38,17 @@ CREATE INDEX idx_vale_sync
 ON vales(sync_status)
 ''';
 
-const createCompraSyncIndex = '''
-CREATE INDEX idx_compra_sync
-ON compras(sync_status)
+const String createComprasFechaSolicitudIndex = '''
+CREATE INDEX idx_compras_fecha_solicitud
+ON compras(fecha_solicitud);
+''';
+
+const String createComprasEstadoIndex = '''
+CREATE INDEX idx_compras_estado
+ON compras(estado);
+''';
+
+const String createCompraItemsCompraIdIndex = '''
+CREATE INDEX idx_compra_items_compra_id
+ON compra_items(compra_id);
 ''';
