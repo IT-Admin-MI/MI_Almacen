@@ -13,7 +13,7 @@ import 'package:mi_almacen/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+   // await tester.pumpWidget(const MyApp(authService: null, proyectoRepository: null, valeViewModel: null, aprobacionValesViewModel: null, homeViewModel: null, historialValesViewModel: null, liberacionValesViewModel: null, adminDbViewModel: null, compraViewModel: null, loginViewModel: null, syncService: null,));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

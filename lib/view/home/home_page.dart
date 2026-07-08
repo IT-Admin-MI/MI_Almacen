@@ -275,6 +275,7 @@ class _HomePageState
                       nombre: nombreCtrl.text.trim(),
                       orden: proyecto.orden, // se mantiene, orden solo cambia al activar/desactivar
                       status: status,
+                      tipo:proyecto.tipo,
                       fechaEntrega: fechaEntrega,
                     );
 
@@ -462,6 +463,8 @@ class _HomePageState
                       nombre: nombre,
                       orden: ordenAuto,
                       status: true,
+                      tipo:1,
+
                       fechaEntrega: fechaEntrega,
                     );
 
@@ -497,6 +500,31 @@ class _HomePageState
           '${fecha.month.toString().padLeft(2, '0')}/'
           '${fecha.year}';
   }
+  Color _colorFechaEntrega(DateTime? fechaEntrega) {
+    if (fechaEntrega == null) return Colors.grey;
+
+    final hoy = DateTime.now();
+    final hoySinHora = DateTime(hoy.year, hoy.month, hoy.day);
+    final entrega = DateTime(
+      fechaEntrega.year,
+      fechaEntrega.month,
+      fechaEntrega.day,
+    );
+
+    final diasRestantes = entrega.difference(hoySinHora).inDays;
+
+    if (diasRestantes <= 0) {
+      // Hoy o ya pasó
+      return Colors.red;
+    } else if (diasRestantes <= 7) {
+      // Dentro de una semana
+      return Colors.orange;
+      // o Colors.amber si prefieres amarillo
+    } else {
+      // Más de una semana
+      return Colors.green;
+    }
+  }
 
   Widget buildProyectoCard(Proyecto proyecto, int totalActivos, int index) {
     final puedeEditar = usuario?.rol == 0;
@@ -518,14 +546,21 @@ class _HomePageState
               children: [
                 Text(
                   '${proyecto.clave} - ${proyecto.nombre}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  proyecto.fechaEntrega != null
-                      ? formatearFecha(proyecto.fechaEntrega!)
-                      : 'Sin fecha',
-                  style: const TextStyle(fontSize: 13, color: Colors.grey),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    proyecto.fechaEntrega != null
+                        ? formatearFecha(proyecto.fechaEntrega!)
+                        : 'Sin fecha',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: _colorFechaEntrega(proyecto.fechaEntrega),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -729,6 +764,7 @@ class _HomePageState
                           );
                         },
                       ),
+                    if (usuario != null && usuario?.rol == Roles.compras)
                     ListTile(
                       leading: const Icon(Icons.add_shopping_cart),
                       title: const Text('Nueva Compra'),
@@ -821,7 +857,9 @@ class _HomePageState
 
     final proyectosMostrar = widget.homeViewModel.mostrarTodos
         ? proyectosOrdenados
-        : proyectosOrdenados.where((p) => p.status).toList();
+        : proyectosOrdenados
+        .where((p) => p.status && p.tipo == 1)
+        .toList();
 
     final totalActivos = proyectos.where((p) => p.status).length;
 

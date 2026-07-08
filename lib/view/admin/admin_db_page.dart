@@ -73,6 +73,7 @@ class _AdminDbPageState extends State<AdminDbPage> {
   static const _camposProyecto = [
     _CampoConfig(key: 'clave', label: 'Clave', soloLectura: true),
     _CampoConfig(key: 'nombre', label: 'Nombre'),
+    _CampoConfig(key: 'tipo', label: 'Tipo', tipo: _TipoCampo.entero),
     _CampoConfig(key: 'orden', label: 'Orden', tipo: _TipoCampo.entero),
     _CampoConfig(key: 'status', label: 'Activo', tipo: _TipoCampo.booleano),
     _CampoConfig(key: 'fechaEntrega', label: 'Fecha entrega (ISO8601)'),

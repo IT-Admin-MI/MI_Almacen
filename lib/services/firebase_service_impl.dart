@@ -75,8 +75,8 @@ class FirebaseServiceImpl implements FirebaseService {
 
       return Proyecto(
         clave: data['codigo'] ?? '',
-        nombre:
-        data['nombre'] ?? '',
+        nombre: data['nombre'] ?? '',
+        tipo: data['tipo'] ?? 0,
         fechaEntrega:
         data['fechaEntrega'] != null
             ? DateTime.parse(
@@ -378,6 +378,7 @@ class FirebaseServiceImpl implements FirebaseService {
       'nombre': proyecto.nombre,
       'orden': proyecto.orden,
       'status': proyecto.status,
+      'tipo':proyecto.tipo,
       'fechaEntrega': proyecto.fechaEntrega != null
           ? '${proyecto.fechaEntrega!.year}-'
           '${proyecto.fechaEntrega!.month.toString().padLeft(2, '0')}-'

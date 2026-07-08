@@ -381,6 +381,7 @@ class ValeRepositoryImpl
           item['proyecto_nombre']
           as String,
           orden: 0,
+          tipo: 0,
           status: true,
         ),
         cantidad:

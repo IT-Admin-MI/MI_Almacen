@@ -129,8 +129,9 @@ class ValeViewModel extends ChangeNotifier {
 
       notifyListeners();
 
-      _proyectos =
-      await proyectoRepository.getAll();
+      _proyectos = (await proyectoRepository.getAll())
+          .where((p) => p.status || p.tipo == 0)
+          .toList();
 
     } finally {
 

@@ -27,11 +27,11 @@ class SyncServiceImpl implements SyncService {
   @override
   Future<void> sincronizarTodo() async {
     await _intentar(() => valeSyncService.sincronizarPendientes());
-    await _intentar(() => compraSyncService.sincronizarPendientes());
+    //await _intentar(() => compraSyncService.sincronizarPendientes());
     await _intentar(() => sincronizarProyectos());
     await _intentar(() => sincronizarVales());
-    await _intentar(() => sincronizarCompras());
-    await _intentar(() => sincronizarMateriales());
+    //await _intentar(() => sincronizarCompras());
+    //await _intentar(() => sincronizarMateriales());
   }
 
   Future<void> _intentar(Future<void> Function() accion) async {

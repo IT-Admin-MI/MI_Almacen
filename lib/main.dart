@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mi_almacen/repositories/admin_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository_impl.dart';
-import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
 import 'package:mi_almacen/services/compra_sync_Service_impl.dart';
-import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
@@ -17,7 +15,6 @@ import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 
 import 'firebase_options.dart';
-
 import 'database/database_helper.dart';
 
 import 'repositories/material_repository_impl.dart';
@@ -26,10 +23,12 @@ import 'repositories/usuario_repository_impl.dart';
 import 'repositories/vale_repository_impl.dart';
 import 'repositories/historial_vale_repository_impl.dart';
 
+import 'services/auth_service.dart';
 import 'services/auth_service_impl.dart';
 import 'services/excel_service_impl.dart';
 import 'services/firebase_service_impl.dart';
 import 'services/vale_sync_service_impl.dart';
+import 'services/sync_service.dart';
 
 import 'view/home/home_page.dart';
 import 'view/login/login_page.dart';
@@ -42,16 +41,11 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
 
   if (!kIsWeb &&
-      (Platform.isWindows ||
-          Platform.isLinux ||
-          Platform.isMacOS)) {
-
+      (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     sqfliteFfiInit();
-
     databaseFactory = databaseFactoryFfi;
   }
 
@@ -59,176 +53,200 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // ==========================
+  // CORE (una sola vez, antes de runApp)
+  // ==========================
+
+  final databaseHelper = DatabaseHelper.instance;
+  final firebaseService = FirebaseServiceImpl();
+
+  final usuarioRepository = UsuarioRepositoryImpl(
+    databaseHelper: databaseHelper,
+  );
+
+  final proyectoRepository = ProyectoRepositoryImpl(
+    databaseHelper: databaseHelper,
+    firebaseService: firebaseService,
+  );
+
+  final excelService = ExcelServiceImpl();
+
+  final materialRepository = MaterialRepositoryImpl(
+    databaseHelper: databaseHelper,
+    excelService: excelService,
+  );
+
+  final valeRepository = ValeRepositoryImpl(
+    databaseHelper: databaseHelper,
+  );
+
+  final compraRepository = CompraRepositoryImpl(
+    databaseHelper: databaseHelper,
+  );
+
+  final historialValeRepository = HistorialValeRepositoryImpl(
+    databaseHelper: databaseHelper,
+  );
+
+  final adminRepository = AdminRepository(databaseHelper: databaseHelper);
+
+  final authService = AuthServiceImpl(
+    firebaseService: firebaseService,
+    usuarioRepository: usuarioRepository,
+  );
+
+  final valeService = ValeServiceImpl(
+    valeRepository: valeRepository,
+    databaseHelper: databaseHelper,
+    firebaseService: firebaseService,
+    authService: authService,
+  );
+
+  final valeSyncService = ValeSyncServiceImpl(
+    firebaseService: firebaseService,
+    valeRepository: valeRepository,
+  );
+
+  final compraSyncService = CompraSyncServiceImpl(
+    firebaseService: firebaseService,
+    compraRepository: compraRepository,
+  );
+
+  final syncService = SyncServiceImpl(
+    proyectoRepository: proyectoRepository,
+    materialRepository: materialRepository,
+    driveService: DriveServiceImpl(),
+    valeSyncService: valeSyncService,
+    compraSyncService: compraSyncService,
+  );
+
+  // ==========================
+  // VIEWMODELS
+  // ==========================
+
+  final historialValeViewModel = HistorialValesViewModel(
+    valeService: valeService,
+    syncService: syncService,
+  );
+
+  final liberacionValeViewModel = LiberacionValesViewModel(
+    valeRepository: valeRepository,
+    proyectoRepository: proyectoRepository,
+    firebaseService: firebaseService,
+  );
+
+  final aprobacionValesViewModel = AprobacionValesViewModel(
+    firebaseService: firebaseService,
+    valeService: valeService,
+    authService: authService,
+    proyectoRepository: proyectoRepository,
+    syncService: syncService,
+  );
+
+  final homeViewModel = HomeViewModel(proyectoRepository: proyectoRepository);
+
+  final loginViewModel = LoginViewModel(authService: authService);
+
+  final valeViewModel = ValeViewModel(
+    materialRepository: materialRepository,
+    proyectoRepository: proyectoRepository,
+    valeRepository: valeRepository,
+    historialValeRepository: historialValeRepository,
+    valeSyncService: valeSyncService,
+    authService: authService,
+  );
+
+  final adminDbViewModel = AdminDbViewModel(
+    adminRepository: adminRepository,
+    valeRepository: valeRepository,
+    proyectoRepository: proyectoRepository,
+    valeSyncService: valeSyncService,
+    materialRepository: materialRepository,
+  );
+
+  final compraService = CompraServiceImpl(compraRepository: compraRepository);
+
+  final compraViewModel = CompraViewModel(
+    compraService: compraService,
+    materialRepository: materialRepository,
+    proyectoRepository: proyectoRepository,
+  );
+
+  // ==========================
+  // SYNC INICIAL — antes de runApp(), mientras el splash nativo sigue visible
+  // ==========================
+
+  try {
+    final haySesion = await authService.haySesionActiva();
+    if (haySesion) {
+      final valida = await authService.validarSesion();
+      if (valida) {
+        await syncService.sincronizarTodo().timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            print('SYNC INICIAL: tiempo límite alcanzado, continuando sin bloquear el arranque');
+          },
+        );
+      }
+      print('SYNC CORRECTO');
+    }
+  } catch (e) {
+    print('ERROR EN VALIDACIÓN/SYNC INICIAL: $e');
+  }
+
+  // ==========================
+  // APP
+  // ==========================
+
   runApp(
-    const MyApp(),
+    MyApp(
+      authService: authService,
+      proyectoRepository: proyectoRepository,
+      valeViewModel: valeViewModel,
+      aprobacionValesViewModel: aprobacionValesViewModel,
+      homeViewModel: homeViewModel,
+      historialValesViewModel: historialValeViewModel,
+      liberacionValesViewModel: liberacionValeViewModel,
+      adminDbViewModel: adminDbViewModel,
+      compraViewModel: compraViewModel,
+      loginViewModel: loginViewModel,
+      syncService: syncService,
+    ),
   );
 }
+
 class MyApp extends StatelessWidget {
+  final AuthService authService;
+  final ProyectoRepositoryImpl proyectoRepository;
+  final ValeViewModel valeViewModel;
+  final AprobacionValesViewModel aprobacionValesViewModel;
+  final HomeViewModel homeViewModel;
+  final HistorialValesViewModel historialValesViewModel;
+  final LiberacionValesViewModel liberacionValesViewModel;
+  final AdminDbViewModel adminDbViewModel;
+  final CompraViewModel compraViewModel;
+  final LoginViewModel loginViewModel;
+  final SyncService syncService;
 
   const MyApp({
     super.key,
+    required this.authService,
+    required this.proyectoRepository,
+    required this.valeViewModel,
+    required this.aprobacionValesViewModel,
+    required this.homeViewModel,
+    required this.historialValesViewModel,
+    required this.liberacionValesViewModel,
+    required this.adminDbViewModel,
+    required this.compraViewModel,
+    required this.loginViewModel,
+    required this.syncService,
   });
-
-
 
   @override
   Widget build(BuildContext context) {
-
-    final databaseHelper = DatabaseHelper.instance;
-    final firebaseService = FirebaseServiceImpl();
-
-    // ==========================
-    // CORE
-    // ==========================
-
-
-    final usuarioRepository = UsuarioRepositoryImpl(
-      databaseHelper: databaseHelper,
-    );
-
-    final proyectoRepository = ProyectoRepositoryImpl(
-      databaseHelper: databaseHelper,
-      firebaseService: firebaseService,
-    );
-
-    final excelService = ExcelServiceImpl();
-
-    final materialRepository = MaterialRepositoryImpl(
-      databaseHelper: databaseHelper,
-      excelService: excelService,
-    );
-
-    final valeRepository = ValeRepositoryImpl(
-      databaseHelper: databaseHelper,
-    );
-
-    final compraResopitory = CompraRepositoryImpl(databaseHelper: databaseHelper);
-
-
-    final historialValeRepository = HistorialValeRepositoryImpl(
-      databaseHelper: databaseHelper,
-    );
-
-    final adminRepository = AdminRepository(databaseHelper: databaseHelper);
-
-
-    final authService =
-    AuthServiceImpl(
-      firebaseService: firebaseService,
-      usuarioRepository: usuarioRepository,
-    );
-
-    final valeService = ValeServiceImpl(
-      valeRepository: valeRepository,
-      databaseHelper: databaseHelper,
-      firebaseService: firebaseService,
-      authService: authService,
-    );
-
-    final valeSyncService =
-    ValeSyncServiceImpl(
-      firebaseService: firebaseService,
-      valeRepository: valeRepository,
-    );
-
-    final compraSyncService = CompraSyncServiceImpl(
-      firebaseService: firebaseService,
-      compraRepository: compraResopitory,
-    );
-
-    final syncService = SyncServiceImpl(
-      proyectoRepository: proyectoRepository,
-      materialRepository: materialRepository,
-      driveService: DriveServiceImpl(),
-      valeSyncService: valeSyncService,
-      compraSyncService: compraSyncService,
-    );
-
-    // ==========================
-    // VIEWMODELS
-    // ==========================
-
-
-    final historialValeViewModel =
-    HistorialValesViewModel(
-      valeService: valeService,
-      syncService: syncService,
-    );
-
-    final liberacionValeViewModel =
-    LiberacionValesViewModel(
-        valeRepository: valeRepository,
-        proyectoRepository: proyectoRepository,
-        firebaseService: firebaseService);
-
-
-    final aprobacionValesViewModel =
-    AprobacionValesViewModel(
-      firebaseService: firebaseService,
-      valeService: valeService,
-      authService: authService,
-      proyectoRepository: proyectoRepository,
-      syncService: syncService,
-    );
-
-    final homeViewModel = HomeViewModel(proyectoRepository: proyectoRepository);
-
-    final loginViewModel =
-    LoginViewModel(
-      authService: authService,
-    );
-
-    final valeViewModel =
-    ValeViewModel(
-      materialRepository:
-      materialRepository,
-
-      proyectoRepository:
-      proyectoRepository,
-
-      valeRepository:
-      valeRepository,
-
-      historialValeRepository:
-      historialValeRepository,
-
-      valeSyncService:
-      valeSyncService,
-
-      authService:
-      authService,
-    );
-
-    final adminDbViewModel = AdminDbViewModel(
-      adminRepository: adminRepository,
-      valeRepository: valeRepository,
-      proyectoRepository: proyectoRepository,
-      valeSyncService: valeSyncService,
-      materialRepository: materialRepository,
-    );
-
-    final compraRepository = CompraRepositoryImpl(
-      databaseHelper: databaseHelper,
-    );
-
-    final compraService = CompraServiceImpl(
-      compraRepository: compraRepository,
-    );
-
-    final compraViewModel = CompraViewModel(
-      compraService: compraService,
-      materialRepository: materialRepository,
-      proyectoRepository: proyectoRepository,
-    );
-
-    // ==========================
-    // APP
-    // ==========================
-
     return MaterialApp(
-
       title: 'MI Almacén',
-
       debugShowCheckedModeBanner: false,
 
       home: SessionGate(
@@ -238,33 +256,26 @@ class MyApp extends StatelessWidget {
         valeViewModel: valeViewModel,
         aprobacionValesViewModel: aprobacionValesViewModel,
         homeViewModel: homeViewModel,
-        historialValesViewModel: historialValeViewModel,
-        liberacionValesViewModel: liberacionValeViewModel,
+        historialValesViewModel: historialValesViewModel,
+        liberacionValesViewModel: liberacionValesViewModel,
         adminDbViewModel: adminDbViewModel,
         compraViewModel: compraViewModel,
         syncService: syncService,
       ),
 
       routes: {
-
-        '/login': (context) =>
-            LoginPage(
-              viewModel:
-              loginViewModel,
-            ),
-
-        '/home': (context) =>
-            HomePage(
-              authService: authService,
-              proyectoRepository: proyectoRepository,
-              valeViewModel: valeViewModel,
-              aprobacionValesViewModel: aprobacionValesViewModel,
-              homeViewModel: homeViewModel,
-              historialValesViewModel: historialValeViewModel,
-              liberacionValesViewModel: liberacionValeViewModel,
-              adminDbViewModel: adminDbViewModel,
-              compraViewModel: compraViewModel,
-            ),
+        '/login': (context) => LoginPage(viewModel: loginViewModel),
+        '/home': (context) => HomePage(
+          authService: authService,
+          proyectoRepository: proyectoRepository,
+          valeViewModel: valeViewModel,
+          aprobacionValesViewModel: aprobacionValesViewModel,
+          homeViewModel: homeViewModel,
+          historialValesViewModel: historialValesViewModel,
+          liberacionValesViewModel: liberacionValesViewModel,
+          adminDbViewModel: adminDbViewModel,
+          compraViewModel: compraViewModel,
+        ),
       },
     );
   }

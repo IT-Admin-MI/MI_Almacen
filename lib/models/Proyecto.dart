@@ -6,6 +6,7 @@ class Proyecto {
   final DateTime? fechaEntrega;
   final int orden;
   final bool status;
+  final int? tipo;
 
   Proyecto({
     required this.clave,
@@ -13,6 +14,7 @@ class Proyecto {
     this.fechaEntrega,
     required this.orden,
     required this.status,
+    this.tipo,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +24,7 @@ class Proyecto {
       'nombre': nombre,
       'orden': orden,
       'status': status ? 1 : 0,
+      'tipo': tipo ?? 0,
       'fechaEntrega':
       fechaEntrega
           ?.toIso8601String(),
@@ -37,6 +40,7 @@ class Proyecto {
       nombre: map['nombre'],
       orden: map['orden'] as int? ?? 0,
       status: (map['status'] ?? 1) == 1,
+      tipo: map['tipo'],
       fechaEntrega:
       map['fechaEntrega'] != null
           ? DateTime.parse(
@@ -60,6 +64,7 @@ class Proyecto {
       clave: data['codigo'] ?? '',
       nombre: data['nombre'] ?? '',
       status: _parseBool(data['status']),
+      tipo: data['tipo'] ??0,
       fechaEntrega: DateTime.parse(
         data['fechaEntrega'],
       ),

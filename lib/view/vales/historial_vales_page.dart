@@ -212,7 +212,7 @@ class _HistorialValesPageState
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Estado: ${vale.estado == 1 ? "Aprobado" : "No aprobado"}',
+                                      'Estado: ${vale.estado == 1 ? "Aprobado" : vale.estado == 2 ? "Rechazado" : "No aprobado"}',
                                     ),
                                     Text('Fecha: ${vale.fechaCreacion}'),
                                     const Divider(),

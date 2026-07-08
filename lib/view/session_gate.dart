@@ -89,7 +89,6 @@ class _SessionGateState
       print('SYNC INICIAL FALLÓ: $e');
     });
   }
-
   @override
   Widget build(BuildContext context) {
 

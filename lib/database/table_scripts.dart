@@ -15,6 +15,7 @@ CREATE TABLE proyectos(
   nombre TEXT NOT NULL,
   orden INTEGER NOT NULL,
   status BOLEAN NOT NULL,
+  tipo INTEGER,
   fechaEntrega TEXT
 )
 ''';
