@@ -26,22 +26,20 @@ class SyncServiceImpl implements SyncService {
 
   @override
   Future<void> sincronizarTodo() async {
+    await _intentar(() => valeSyncService.sincronizarPendientes());
+    await _intentar(() => compraSyncService.sincronizarPendientes());
+    await _intentar(() => sincronizarProyectos());
+    await _intentar(() => sincronizarVales());
+    await _intentar(() => sincronizarCompras());
+    await _intentar(() => sincronizarMateriales());
+  }
 
-    // 1.- Subir información local
-
-    await valeSyncService.sincronizarPendientes();
-
-    await compraSyncService.sincronizarPendientes();
-
-    // 2.- Descargar información del servidor
-
-    await sincronizarProyectos();
-
-    await sincronizarVales();
-
-    await sincronizarCompras();
-
-    await sincronizarMateriales();
+  Future<void> _intentar(Future<void> Function() accion) async {
+    try {
+      await accion();
+    } catch (e) {
+      print('ERROR EN SYNC: $e');
+    }
   }
 
   @override

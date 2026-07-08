@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/services/sync_service.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
@@ -24,6 +25,7 @@ class SessionGate extends StatefulWidget {
   final LiberacionValesViewModel liberacionValesViewModel;
   final AdminDbViewModel adminDbViewModel;
   final CompraViewModel compraViewModel;
+  final SyncService syncService;
 
   const SessionGate({
     super.key,
@@ -37,6 +39,7 @@ class SessionGate extends StatefulWidget {
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
     required this.compraViewModel,
+    required this.syncService,
   });
 
   @override
@@ -77,8 +80,16 @@ class _SessionGateState
       autorizado = valida;
     });
 
-
   }
+
+  void _sincronizarEnSegundoPlano() {
+    widget.syncService.sincronizarTodo().then((_) {
+      print('SYNC INICIAL COMPLETADO');
+    }).catchError((e) {
+      print('SYNC INICIAL FALLÓ: $e');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
 

@@ -242,6 +242,7 @@ class MyApp extends StatelessWidget {
         liberacionValesViewModel: liberacionValeViewModel,
         adminDbViewModel: adminDbViewModel,
         compraViewModel: compraViewModel,
+        syncService: syncService,
       ),
 
       routes: {

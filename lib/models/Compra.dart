@@ -24,6 +24,7 @@ class Compra {
   final EstadoCompra estado;
   final int estatus;
   final List<CompraItem> items;
+  final int sync_status;
 
   Compra({
     this.id,
@@ -35,6 +36,7 @@ class Compra {
     required this.estado,
     required this.estatus,
     required this.items,
+    required this.sync_status,
   });
 
   Compra copyWith({
@@ -47,6 +49,7 @@ class Compra {
     EstadoCompra? estado,
     int? estatus,
     List<CompraItem>? items,
+    int? sync_status,
   }) {
     return Compra(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class Compra {
       estado: estado ?? this.estado,
       estatus: estatus ?? this.estatus,
       items: items ?? this.items,
+      sync_status: sync_status ?? this.sync_status,
     );
   }
 
@@ -71,6 +75,7 @@ class Compra {
       'fecha_entrega': fechaEntrega?.toIso8601String(),
       'estado': estado.index,
       'estatus': estatus,
+      'sync_status': sync_status,
     };
   }
 
@@ -90,6 +95,7 @@ class Compra {
       estado: EstadoCompra.values[map['estado']],
       estatus: map['estatus'],
       items: items,
+      sync_status: map['sync_status'],
     );
   }
 }

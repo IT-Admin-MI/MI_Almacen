@@ -89,7 +89,8 @@ CREATE TABLE compras(
     fecha_solicitud TEXT NOT NULL,
     fecha_entrega TEXT,
     estado INTEGER NOT NULL,
-    estatus INTEGER NOT NULL
+    estatus INTEGER NOT NULL,
+    sync_status INTEGER NOT NULL
 );
 ''';
 

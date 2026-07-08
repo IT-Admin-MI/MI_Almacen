@@ -523,6 +523,7 @@ class FirebaseServiceImpl implements FirebaseService {
           data['estatus'] ?? 0,
 
           items: items,
+          sync_status: data['sync_status']??0,
         ),
       );
     }

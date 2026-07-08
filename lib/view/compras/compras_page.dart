@@ -1135,6 +1135,7 @@ class _ComprasPageState extends State<ComprasPage> {
                                 (item) => item.copyWith(compraId: id),
                           )
                               .toList(),
+                          sync_status: 0,
                         );
 
                         if (esEdicion) {
