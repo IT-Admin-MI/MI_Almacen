@@ -177,6 +177,41 @@ class CompraRepositoryImpl implements CompraRepository {
     );
 
   }
+
+  @override
+  Future<List<Compra>> getPendientesSincronizacion() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'compras',
+      where: 'sync_status = ?',
+      whereArgs: [0],
+    );
+
+    final lista = <Compra>[];
+
+    for (final row in result) {
+      lista.add(await _mapCompra(db, row));
+    }
+
+    return lista;
+  }
+
+  @override
+  Future<void> marcarSincronizado(String compraId) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'compras',
+      {
+        'sync_status': 1,
+      },
+      where: 'id = ?',
+      whereArgs: [compraId],
+    );
+  }
 }
 
 Future<Compra> _mapCompra(

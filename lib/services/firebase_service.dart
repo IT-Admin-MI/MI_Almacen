@@ -1,3 +1,4 @@
+import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/models/Vale.dart';
 
 import '../models/Proyecto.dart';
@@ -27,5 +28,8 @@ abstract class FirebaseService {
     required int liberado,
   });
 
+  Future<void> guardarCompra(Compra compra);
+
+  Future<List<Compra>> obtenerCompras();
 
 }

@@ -21,4 +21,8 @@ abstract class CompraRepository {
 
   Future<void> updateEstado(String compraId, EstadoCompra estado);
 
+  Future<List<Compra>> getPendientesSincronizacion();
+
+  Future<void> marcarSincronizado(String compraId);
+
 }

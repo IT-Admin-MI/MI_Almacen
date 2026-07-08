@@ -4,6 +4,8 @@ import 'package:mi_almacen/repositories/admin_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository_impl.dart';
 import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
+import 'package:mi_almacen/services/compra_sync_Service_impl.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
@@ -100,6 +102,8 @@ class MyApp extends StatelessWidget {
       databaseHelper: databaseHelper,
     );
 
+    final compraResopitory = CompraRepositoryImpl(databaseHelper: databaseHelper);
+
 
     final historialValeRepository = HistorialValeRepositoryImpl(
       databaseHelper: databaseHelper,
@@ -127,14 +131,18 @@ class MyApp extends StatelessWidget {
       valeRepository: valeRepository,
     );
 
+    final compraSyncService = CompraSyncServiceImpl(
+      firebaseService: firebaseService,
+      compraRepository: compraResopitory,
+    );
+
     final syncService = SyncServiceImpl(
       proyectoRepository: proyectoRepository,
       materialRepository: materialRepository,
       driveService: DriveServiceImpl(),
       valeSyncService: valeSyncService,
+      compraSyncService: compraSyncService,
     );
-
-
 
     // ==========================
     // VIEWMODELS

@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mi_almacen/models/Compra.dart';
+import 'package:mi_almacen/models/CompraItem.dart';
 import 'package:mi_almacen/models/Material.dart';
 import 'package:mi_almacen/models/Vale.dart';
 import 'package:mi_almacen/models/Vale_Item.dart';
@@ -397,4 +399,135 @@ class FirebaseServiceImpl implements FirebaseService {
       'liberado': liberado,
     });
   }
+
+  @override
+  Future<void> guardarCompra(Compra compra) async {
+
+    final docRef = firestore
+        .collection('compras')
+        .doc(compra.id);
+
+    await docRef.set(compra.toMap());
+
+    // Eliminar items anteriores
+    final itemsExistentes =
+    await docRef.collection('items').get();
+
+    final batch = firestore.batch();
+
+    for (final doc in itemsExistentes.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // Guardar items
+    for (final item in compra.items) {
+
+      final itemRef =
+      docRef.collection('items').doc();
+
+      batch.set(itemRef, {
+        'compra_id': item.compraId,
+        'material_clave': item.materialClave,
+        'nombre': item.nombre,
+        'proyecto_clave': item.proyectoClave,
+        'cantidad': item.cantidad,
+        'unidad': item.unidad,
+      });
+    }
+
+    await batch.commit();
+  }
+
+  @override
+  Future<List<Compra>> obtenerCompras() async {
+    final snapshot =
+        await firestore.collection('compras').get();
+
+    final compras = <Compra>[];
+
+    for (final doc in snapshot.docs) {
+
+      final data = doc.data();
+
+      final itemsSnapshot =
+          await doc.reference
+          .collection('items')
+          .get();
+
+      final items = <CompraItem>[];
+
+      for (final itemDoc in itemsSnapshot.docs) {
+
+        final item = itemDoc.data();
+
+        items.add(
+
+          CompraItem(
+
+            id: itemDoc.id,
+
+            compraId:
+            item['compra_id'] ?? '',
+
+            materialClave:
+            item['material_clave'],
+
+            nombre:
+            item['nombre'] ?? '',
+
+            proyectoClave:
+            item['proyecto_clave'],
+
+            cantidad:
+            (item['cantidad'] as num).toDouble(),
+
+            unidad:
+            item['unidad'] ?? '',
+          ),
+        );
+      }
+
+      compras.add(
+
+        Compra(
+
+          id:
+          data['id'],
+
+          nombre:
+          data['nombre'] ?? '',
+
+          descripcion:
+          data['descripcion'],
+
+          ordenCompra:
+          data['orden_compra'] ?? '',
+
+          fechaSolicitud:
+          DateTime.parse(
+            data['fecha_solicitud'],
+          ),
+
+          fechaEntrega:
+          data['fecha_entrega'] != null
+              ? DateTime.parse(
+            data['fecha_entrega'],
+          )
+              : null,
+
+          estado:
+          EstadoCompra.values[
+          data['estado']],
+
+          estatus:
+          data['estatus'] ?? 0,
+
+          items: items,
+        ),
+      );
+    }
+
+    return compras;
+  }
+
 }
