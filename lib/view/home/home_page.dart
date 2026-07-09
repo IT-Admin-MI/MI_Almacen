@@ -546,7 +546,7 @@ class _HomePageState
               children: [
                 Text(
                   '${proyecto.clave} - ${proyecto.nombre}',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 Align(
@@ -556,7 +556,7 @@ class _HomePageState
                         ? formatearFecha(proyecto.fechaEntrega!)
                         : 'Sin fecha',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       color: _colorFechaEntrega(proyecto.fechaEntrega),
                       fontWeight: FontWeight.bold,
                     ),
@@ -733,7 +733,7 @@ class _HomePageState
                     if (usuario != null && (usuario?.rol == 0 || usuario?.rol == 3))
                       ListTile(
                         leading: const Icon(Icons.inventory),
-                        title: const Text('Liberación de Vales'),
+                        title: const Text('Entrega de Vales'),
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -885,31 +885,51 @@ class _HomePageState
         itemBuilder: (context, index) {
           return buildProyectoCard(proyectosMostrar[index], totalActivos, index);
         },
-        onReorder: (oldIndex, newIndex) async {
+        onReorder: (oldIndex, newIndex) {
           if (newIndex > oldIndex) newIndex -= 1;
 
           final proyectoMovido = proyectosMostrar[oldIndex];
-          if (!proyectoMovido.status) return; // los inactivos no se reordenan
+          if (!proyectoMovido.status) return;
 
-          // No permitir soltar un activo dentro de la zona de inactivos
           final maxIndex = totalActivos - 1;
           if (newIndex > maxIndex) newIndex = maxIndex;
           if (newIndex == oldIndex) return;
 
           final nuevoOrden = newIndex + 1;
 
-          final activosActualizados = await widget.homeViewModel.cambiarOrden(
-            proyectoMovido,
-            nuevoOrden,
-            proyectos,
-          );
+          // 1) Reordenar localmente y actualizar UI YA (optimista)
+          final activos = proyectos.where((p) => p.status).toList()
+            ..sort((a, b) => a.orden.compareTo(b.orden));
+          activos.removeWhere((p) => p.clave == proyectoMovido.clave);
+
+          final insertIndex = (nuevoOrden - 1).clamp(0, activos.length);
+          activos.insert(insertIndex, proyectoMovido);
+
+          final reordenadosLocal = <Proyecto>[
+            for (int i = 0; i < activos.length; i++)
+              Proyecto(
+                clave: activos[i].clave,
+                nombre: activos[i].nombre,
+                fechaEntrega: activos[i].fechaEntrega,
+                orden: i + 1,
+                status: true,
+                tipo: activos[i].tipo,
+              ),
+          ];
 
           setState(() {
-            for (final actualizado in activosActualizados) {
+            for (final actualizado in reordenadosLocal) {
               final i = proyectos.indexWhere((p) => p.clave == actualizado.clave);
               if (i != -1) proyectos[i] = actualizado;
             }
             _reordenarLista();
+          });
+
+          // 2) Sincronizar con Firebase/SQLite en segundo plano, sin bloquear la UI
+          widget.homeViewModel.cambiarOrden(proyectoMovido, nuevoOrden, proyectos)
+              .catchError((e) {
+            debugPrint('Error sincronizando orden: $e');
+            // Opcional: mostrar un snackbar o revertir si falla
           });
         },
       ),

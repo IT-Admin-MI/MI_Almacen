@@ -1,13 +1,16 @@
 import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/services/compra_service.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 
 class CompraServiceImpl implements CompraService {
 
   final CompraRepository compraRepository;
+  final CompraSyncService compraSyncService;
 
   CompraServiceImpl({
     required this.compraRepository,
+    required this.compraSyncService,
   });
 
   @override
@@ -56,6 +59,16 @@ class CompraServiceImpl implements CompraService {
       estado,
     );
 
+  }
+  Future<void> _sincronizarBestEffort(String compraId) async {
+    try {
+      final compra = await compraRepository.getById(compraId);
+      if (compra != null) {
+        await compraSyncService.sincronizarCompra(compra);
+      }
+    } catch (e) {
+      print('SYNC INMEDIATO DE COMPRA FALLÓ (se reintentará después): $e');
+    }
   }
 
 }

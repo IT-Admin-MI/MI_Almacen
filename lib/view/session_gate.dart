@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
-import 'package:mi_almacen/services/sync_service.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
@@ -25,7 +24,6 @@ class SessionGate extends StatefulWidget {
   final LiberacionValesViewModel liberacionValesViewModel;
   final AdminDbViewModel adminDbViewModel;
   final CompraViewModel compraViewModel;
-  final SyncService syncService;
 
   const SessionGate({
     super.key,
@@ -39,15 +37,13 @@ class SessionGate extends StatefulWidget {
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
     required this.compraViewModel,
-    required this.syncService,
   });
 
   @override
-  State<SessionGate> createState() =>
-      _SessionGateState();
+  State<SessionGate> createState() => _SessionGateState();
 }
-class _SessionGateState
-    extends State<SessionGate> {
+
+class _SessionGateState extends State<SessionGate> {
 
   bool? autorizado;
 
@@ -59,50 +55,32 @@ class _SessionGateState
 
   Future<void> verificarSesion() async {
 
-    final existe =
-    await widget.authService
-        .haySesionActiva();
+    final existe = await widget.authService.haySesionActiva();
 
     if (!existe) {
-
-      setState(() {
-        autorizado = false;
-      });
-
+      setState(() => autorizado = false);
       return;
     }
 
-    final valida =
-    await widget.authService
-        .validarSesion();
+    final valida = await widget.authService.validarSesion();
 
-    setState(() {
-      autorizado = valida;
-    });
+    setState(() => autorizado = valida);
 
+    // Opción A: sin sync aquí. Si la sesión se revalida silenciosamente
+    // (dentro de la ventana de 3 días de AuthServiceImpl.validarSesion()),
+    // no se sincroniza — solo ocurre en un login explícito vía LoginViewModel.
   }
 
-  void _sincronizarEnSegundoPlano() {
-    widget.syncService.sincronizarTodo().then((_) {
-      print('SYNC INICIAL COMPLETADO');
-    }).catchError((e) {
-      print('SYNC INICIAL FALLÓ: $e');
-    });
-  }
   @override
   Widget build(BuildContext context) {
 
     if (autorizado == null) {
-
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (autorizado!) {
-
       return HomePage(
         authService: widget.authService,
         proyectoRepository: widget.proyectoRepository,
@@ -114,11 +92,8 @@ class _SessionGateState
         adminDbViewModel: widget.adminDbViewModel,
         compraViewModel: widget.compraViewModel,
       );
-
     }
 
-    return LoginPage(
-      viewModel: widget.loginViewModel,
-    );
+    return LoginPage(viewModel: widget.loginViewModel);
   }
 }

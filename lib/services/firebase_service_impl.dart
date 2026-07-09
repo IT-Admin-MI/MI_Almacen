@@ -391,13 +391,29 @@ class FirebaseServiceImpl implements FirebaseService {
   Future<void> actualizarLiberacionVale({
     required String id,
     required int liberado,
+    String? comentario,
+    String? liberadoPor,
   }) async {
 
     await firestore
         .collection('vales')
         .doc(id)
         .update({
+
       'liberado': liberado,
+
+      'fecha_validacion':
+      DateTime.now().toIso8601String(),
+
+      'fecha_liberacion':
+      DateTime.now().toIso8601String(),
+
+      'validado_por':
+      liberadoPor,
+
+      'comentario_validacion':
+      comentario,
+
     });
   }
 

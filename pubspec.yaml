@@ -14,13 +14,21 @@ dependencies:
 
   provider: ^6.1.5
 
+
   sqflite: ^2.4.2
   sqflite_common_ffi: ^2.3.6
   cupertino_icons: ^1.0.8
   uuid: ^4.4.0
 
+  excel: ^4.0.6      # crear/editar xlsx real (con estilos, no solo csv)
+  share_plus: ^10.1.0
   path:
   path_provider:
+
+  firebase_messaging: ^16.0.0
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.10.1
+  file_selector: ^1.0.4
 
   firebase_core:
   firebase_auth:

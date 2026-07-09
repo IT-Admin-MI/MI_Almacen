@@ -160,22 +160,17 @@ class CompraRepositoryImpl implements CompraRepository {
   }
 
   @override
-  Future<void> updateEstado(
-      String compraId,
-      EstadoCompra estado,
-      ) async {
-
+  Future<void> updateEstado(String compraId, EstadoCompra estado) async {
     final db = await databaseHelper.database;
-
     await db.update(
       'compras',
       {
         'estado': estado.index,
+        'sync_status': 0, // ← NUEVO: marca pendiente de subir
       },
       where: 'id = ?',
       whereArgs: [compraId],
     );
-
   }
 
   @override

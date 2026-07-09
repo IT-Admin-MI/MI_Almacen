@@ -130,10 +130,6 @@ class ValeServiceImpl implements ValeService {
 
     final usuario = await authService.usuarioActual();
 
-    print('===== OBTENER HISTORIAL =====');
-    print(usuario?.nombre);
-    print(usuario?.rol);
-    print(usuario?.departamento);
 
     if (usuario == null) {
       return [];

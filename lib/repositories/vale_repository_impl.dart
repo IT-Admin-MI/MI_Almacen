@@ -533,18 +533,48 @@ class ValeRepositoryImpl
   }
 
   @override
-  Future<void> liberarVale(String valeId) async {
+  Future<void> actualizarLiberacionVale({
+    required String valeId,
+    required int liberado,
+  }) async {
 
     final db = await databaseHelper.database;
 
     await db.update(
       'vales',
       {
-        'liberado': 1,
+        'liberado': liberado,
+
+        'fecha_validacion':
+        DateTime.now().toIso8601String(),
+
         'sync_status': 0,
       },
+
       where: 'id = ?',
       whereArgs: [valeId],
     );
   }
+
+  @override
+  Future<List<Vale>> getHistorialLiberados() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'vales',
+      where: 'liberado = ?',
+      whereArgs: [1],
+      orderBy: 'fecha_creacion DESC',
+    );
+
+    final lista = <Vale>[];
+
+    for (final row in result) {
+      lista.add(await _mapVale(db, row));
+    }
+
+    return lista;
+  }
+
 }

@@ -145,7 +145,9 @@ Future<void> main() async {
 
   final homeViewModel = HomeViewModel(proyectoRepository: proyectoRepository);
 
-  final loginViewModel = LoginViewModel(authService: authService);
+  final loginViewModel = LoginViewModel(
+      authService: authService,
+      syncService: syncService);
 
   final valeViewModel = ValeViewModel(
     materialRepository: materialRepository,
@@ -164,35 +166,15 @@ Future<void> main() async {
     materialRepository: materialRepository,
   );
 
-  final compraService = CompraServiceImpl(compraRepository: compraRepository);
+  final compraService = CompraServiceImpl(
+      compraRepository: compraRepository,
+      compraSyncService: compraSyncService);
 
   final compraViewModel = CompraViewModel(
     compraService: compraService,
     materialRepository: materialRepository,
     proyectoRepository: proyectoRepository,
   );
-
-  // ==========================
-  // SYNC INICIAL — antes de runApp(), mientras el splash nativo sigue visible
-  // ==========================
-
-  try {
-    final haySesion = await authService.haySesionActiva();
-    if (haySesion) {
-      final valida = await authService.validarSesion();
-      if (valida) {
-        await syncService.sincronizarTodo().timeout(
-          const Duration(seconds: 10),
-          onTimeout: () {
-            print('SYNC INICIAL: tiempo límite alcanzado, continuando sin bloquear el arranque');
-          },
-        );
-      }
-      print('SYNC CORRECTO');
-    }
-  } catch (e) {
-    print('ERROR EN VALIDACIÓN/SYNC INICIAL: $e');
-  }
 
   // ==========================
   // APP
@@ -260,7 +242,6 @@ class MyApp extends StatelessWidget {
         liberacionValesViewModel: liberacionValesViewModel,
         adminDbViewModel: adminDbViewModel,
         compraViewModel: compraViewModel,
-        syncService: syncService,
       ),
 
       routes: {

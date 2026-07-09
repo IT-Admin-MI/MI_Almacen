@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:excel/excel.dart';
 import 'package:http/http.dart' as http;
+import 'package:mi_almacen/models/Vale.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 
@@ -114,4 +117,67 @@ class ExcelServiceImpl implements ExcelService {
     ) ??
         0;
   }
+
+
+
+
+
+
+  @override
+  Future<Uint8List> exportarVales(List<Vale> vales) async {
+    final excel = Excel.createExcel();
+    final nombreHoja = 'Vales liberados';
+
+    excel.rename(excel.getDefaultSheet()!, nombreHoja);
+    final sheet = excel[nombreHoja];
+
+    final encabezados = [
+      'Vale', 'Fecha creación', 'Usuario', 'Departamento',
+      'Fecha liberación', 'Material', 'Código',
+      'Cantidad', 'Unidad', 'Proyecto', 'Comentario',
+    ];
+
+    sheet.appendRow(encabezados.map((e) => TextCellValue(e)).toList());
+
+    for (var col = 0; col < encabezados.length; col++) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
+          .cellStyle = CellStyle(bold: true);
+    }
+
+    for (final vale in vales) {
+
+      final items = vale.items.isEmpty ? [null] : vale.items;
+
+      for (final item in items) {
+        sheet.appendRow([
+          TextCellValue(vale.id),
+          TextCellValue(_fecha(vale.fechaCreacion)),
+          TextCellValue(vale.usuarioNombre),
+          TextCellValue(vale.departamento ?? ''),
+          TextCellValue(
+            vale.fechaValidacion != null ? _fecha(vale.fechaValidacion!) : '',
+          ),
+          TextCellValue(item?.material.descripcion ?? ''),
+          TextCellValue(item?.material.codigo ?? ''),
+          item != null ? DoubleCellValue(item.cantidad) : TextCellValue(''),
+          TextCellValue(item?.unidad ?? ''),
+          TextCellValue(item?.proyecto?.clave ?? ''),
+          TextCellValue(item?.comentarioVale ?? ''),
+        ]);
+      }
+    }
+
+    for (var col = 0; col < encabezados.length; col++) {
+      sheet.setColumnAutoFit(col);
+    }
+
+    final bytes = excel.save();
+    if (bytes == null) throw Exception('No se pudo generar el archivo Excel');
+
+    return Uint8List.fromList(bytes);
+  }
+
+  String _fecha(DateTime f) =>
+      '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}/${f.year}';
 }

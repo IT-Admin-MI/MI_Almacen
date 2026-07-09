@@ -47,6 +47,7 @@ class HomeViewModel extends ChangeNotifier {
     // reconstruir lista FINAL correcta
     final reordenados = <Proyecto>[];
 
+// cambiarOrden
     for (int i = 0; i < activos.length; i++) {
       reordenados.add(
         Proyecto(
@@ -55,6 +56,7 @@ class HomeViewModel extends ChangeNotifier {
           fechaEntrega: activos[i].fechaEntrega,
           orden: i + 1,
           status: true,
+          tipo: activos[i].tipo, // ← agregar
         ),
       );
     }
@@ -104,6 +106,7 @@ class HomeViewModel extends ChangeNotifier {
           fechaEntrega: activos[i].fechaEntrega,
           orden: i + 1,
           status: true,
+          tipo: activos[i].tipo, // ← agregar
         ),
       );
     }

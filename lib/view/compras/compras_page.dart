@@ -1277,13 +1277,13 @@ class _ComprasPageState extends State<ComprasPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
 
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.red,
-                      ),
-                      onPressed: () => _confirmarEliminarCompra(compra),
-                    ),
+                  //  IconButton(
+                  //    icon: const Icon(
+                  //      Icons.delete_outline,
+                  //      color: Colors.red,
+                  //    ),
+                  //    onPressed: () => _confirmarEliminarCompra(compra),
+                    // ),
 
                     const Icon(
                       Icons.chevron_right,

@@ -114,9 +114,6 @@ class ValeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
-
   // ==========================
   // PROYECTOS
   // ==========================

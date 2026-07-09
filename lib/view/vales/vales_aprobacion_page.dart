@@ -24,7 +24,17 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
   void initState() {
     super.initState();
     widget.viewModel.addListener(_onViewModelChanged);
-    widget.viewModel.cargarVales();
+    _cargarInicial();
+  }
+
+  Future<void> _cargarInicial() async {
+    setState(() => _refrescando = true);
+
+    await widget.viewModel.actualizar();
+
+    if (mounted) {
+      setState(() => _refrescando = false);
+    }
   }
 
   void _onViewModelChanged() {
@@ -105,9 +115,9 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
               await widget.viewModel.actualizar();
               if (mounted) setState(() => _refrescando = false);
             },
-            child: (widget.viewModel.cargando && !_refrescando)
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
+              child: widget.viewModel.cargando
+                  ? const Center(child: CircularProgressIndicator())
+                  : Column(
               children: [
                 const Center(
                   child: Text(

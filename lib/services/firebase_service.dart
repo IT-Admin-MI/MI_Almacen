@@ -26,6 +26,8 @@ abstract class FirebaseService {
   Future<void> actualizarLiberacionVale({
     required String id,
     required int liberado,
+    String? comentario,
+    String? liberadoPor,
   });
 
   Future<void> guardarCompra(Compra compra);

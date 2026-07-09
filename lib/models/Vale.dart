@@ -14,6 +14,7 @@ class Vale {
   final String? departamento;
   final List<ValeItem> items;
   final int liberado;
+  final DateTime? fechaLiberacion;
 
   Vale({
     required this.id,
@@ -28,6 +29,7 @@ class Vale {
     this.comentarioValidacion,
     this.syncStatus = 0,
     required this.liberado,
+    this.fechaLiberacion,
   });
 
   Map<String, dynamic> toMap() {
@@ -45,6 +47,7 @@ class Vale {
       'comentario_validacion': comentarioValidacion,
       'sync_status': syncStatus,
       'liberado':liberado,
+      'fecha_liberacion': fechaLiberacion?.toIso8601String(),
     };
   }
 
@@ -100,6 +103,15 @@ class Vale {
           0,
       liberado:
       map['liberado'] as int,
+
+      fechaLiberacion:
+      map['fecha_validacion'] != null
+      ? DateTime.parse(
+    map['fecha_validacion']
+    as String,
+    )
+        : null,
+
     );
   }
 }

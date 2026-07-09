@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/models/Proyecto.dart';
 import 'package:mi_almacen/models/Vale.dart';
+import 'package:mi_almacen/services/excel_service_impl.dart';
+import 'package:mi_almacen/view/vales/historial_liberacion_vales_page.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
+import 'package:mi_almacen/viewmodels/historial_liberacion_vales_viewmodel.dart';
 
 class LiberacionValesPage extends StatefulWidget {
   final LiberacionValesViewModel viewModel;
@@ -57,11 +60,28 @@ class _LiberacionValesPageState
 
           appBar: AppBar(
             centerTitle: true,
-            title: Image.asset(
-              'assets/images/logo_ext.png',
-              height: 40,
-              fit: BoxFit.contain,
-            ),
+            title: Image.asset('assets/images/logo_ext.png', height: 40, fit: BoxFit.contain),
+            actions: [
+              IconButton(
+                iconSize: 34.0,
+                icon: const Icon(Icons.history),
+                tooltip: 'Historial de liberados',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HistorialLiberacionesPage(
+                        viewModel: HistorialLiberacionesViewModel(
+                          valeRepository: widget.viewModel.valeRepository,
+                          proyectoRepository: widget.viewModel.proyectoRepository,
+                          excelExportService: ExcelServiceImpl(),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
 
           body: widget.viewModel.cargando && !_refrescando
@@ -87,7 +107,7 @@ class _LiberacionValesPageState
                   SliverToBoxAdapter(
                     child: const Center(
                       child: Text(
-                        'Liberación de vales',
+                        'Entrega de vales',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
@@ -241,7 +261,7 @@ class _LiberacionValesPageState
           const SizedBox(height: 20),
 
           const Text(
-            "No hay vales pendientes de liberar",
+            "No hay vales pendientes de entregar",
             style: TextStyle(
               color: Colors.grey,
               fontSize: 18,
@@ -331,28 +351,54 @@ class _LiberacionValesPageState
 
                 const SizedBox(height: 20),
 
-                SizedBox(
+                Row(
+                  children: [
 
-                  width: double.infinity,
+                    Expanded(
+                      child: ElevatedButton.icon(
 
-                  child: ElevatedButton.icon(
+                        icon: const Icon(Icons.check),
 
-                    icon: const Icon(Icons.inventory),
+                        label: const Text(
+                            " Entregar"),
 
-                    label: const Text(
-                        "Liberar Vale"),
+                        style:
+                        ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
 
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      Colors.green,
-                      foregroundColor:
-                      Colors.white,
+                        onPressed: () =>
+                            _confirmarLiberacion(vale),
+
+                      ),
                     ),
 
-                    onPressed: () =>
-                        _confirmarLiberacion(vale),
 
-                  ),
+                    const SizedBox(width: 10),
+
+
+                    Expanded(
+                      child: ElevatedButton.icon(
+
+                        icon: const Icon(Icons.close),
+
+                        label:
+                        const Text("Rechazar"),
+
+                        style:
+                        ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+
+                        onPressed: () =>
+                            _confirmarRechazo(vale),
+
+                      ),
+                    ),
+
+                  ],
                 )
 
               ],
@@ -375,10 +421,10 @@ class _LiberacionValesPageState
         return AlertDialog(
 
           title:
-          const Text("Liberar Vale"),
+          const Text("Entregar Vale"),
 
           content: Text(
-              "¿Desea liberar el vale ${vale.id}?"),
+              "¿Desea entregar el vale ${vale.id}?"),
 
           actions: [
 
@@ -406,7 +452,7 @@ class _LiberacionValesPageState
               },
 
               child:
-              const Text("Liberar"),
+              const Text("Entregar"),
 
             )
 
@@ -415,11 +461,133 @@ class _LiberacionValesPageState
       },
     );
 
-    if (confirmar == true) {
+    if(confirmar == true){
+
 
       await widget.viewModel
-          .liberarVale(vale.id);
+          .actualizarLiberacionVale(
+
+        valeId:
+        vale.id,
+
+        liberado:
+        1,
+      );
+
 
     }
+  }
+
+  Future<void> _confirmarRechazo(
+      Vale vale) async {
+
+
+    final comentarioController =
+    TextEditingController();
+
+
+    final confirmar =
+    await showDialog<bool>(
+
+        context: context,
+
+        builder: (_) {
+
+          return AlertDialog(
+
+            title:
+            const Text(
+                "Rechazar Vale"),
+
+            content:
+            TextField(
+
+              controller:
+              comentarioController,
+
+              maxLines: 3,
+
+              decoration:
+              const InputDecoration(
+
+                labelText:
+                "Motivo del rechazo",
+
+                border:
+                OutlineInputBorder(),
+
+              ),
+
+            ),
+
+
+            actions: [
+
+              TextButton(
+
+                onPressed: (){
+                  Navigator.pop(
+                      context,false);
+                },
+
+                child:
+                const Text(
+                    "Cancelar"),
+
+              ),
+
+
+              ElevatedButton(
+
+                style:
+                ElevatedButton.styleFrom(
+                  backgroundColor:
+                  Colors.red,
+                  foregroundColor:
+                  Colors.white,
+                ),
+
+                onPressed: (){
+
+                  Navigator.pop(
+                      context,true);
+
+                },
+
+                child:
+                const Text(
+                    "Rechazar"),
+
+              )
+
+            ],
+
+          );
+
+        }
+
+    );
+
+
+    if(confirmar == true){
+
+
+      await widget.viewModel
+          .actualizarLiberacionVale(
+
+        valeId:
+        vale.id,
+
+        liberado:
+        -1,
+
+        comentario:
+        comentarioController.text,
+
+      );
+
+
+    }
+
   }
 }

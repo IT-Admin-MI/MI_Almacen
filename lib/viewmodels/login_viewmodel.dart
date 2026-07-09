@@ -1,63 +1,77 @@
 import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
+import '../services/sync_service.dart'; // ← NUEVO
 
-class LoginViewModel
-    extends ChangeNotifier {
+class LoginViewModel extends ChangeNotifier {
 
   final AuthService authService;
+  final SyncService syncService; // ← NUEVO
 
   LoginViewModel({
     required this.authService,
+    required this.syncService, // ← NUEVO
   });
 
   bool _loading = false;
-
   bool get loading => _loading;
 
   String? _error;
-
   String? get error => _error;
 
-  Future<bool> login(
-      String usuario,
-      String password,
-      ) async {
+  // ← NUEVO: para poder mostrar un texto distinto mientras sincroniza
+  bool _sincronizando = false;
+  bool get sincronizando => _sincronizando;
+
+  Future<bool> login(String usuario, String password) async {
 
     _loading = true;
     _error = null;
-
     notifyListeners();
 
     try {
-      print("Usuario Login: "+usuario+" Contraseña Login: "+password);
-      final ok =
-      await authService.login(
-        usuario,
-        password,
-      );
+      print("Usuario Login: $usuario Contraseña Login: $password");
+
+      final ok = await authService.login(usuario, password);
 
       if (!ok) {
-
-        _error =
-        'Usuario o contraseña incorrectos';
+        _error = 'Usuario o contraseña incorrectos';
+        return false;
       }
 
-      return ok;
+      // Login correcto: ahora sincronizamos antes de dar por terminado
+      // el proceso, para que HomePage ya encuentre datos frescos.
+      _sincronizando = true;
+      notifyListeners();
+
+      try {
+        await syncService.sincronizarTodo().timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            print('SYNC POST-LOGIN: tiempo límite alcanzado, continuando');
+          },
+        );
+      } catch (e) {
+        // No bloqueamos el login si falla el sync: el usuario ya quedó
+        // autenticado y puede seguir usando la app con datos locales;
+        // el próximo sincronizarTodo() (o pull-to-refresh) reintentará.
+        print('ERROR SINCRONIZANDO TRAS LOGIN: $e');
+      } finally {
+        _sincronizando = false;
+      }
+
+      return true;
 
     } catch (e, stack) {
-
       print('ERROR LOGIN');
       print(e);
       print(stack);
 
       _error = e.toString();
-
       return false;
-    }finally {
 
+    } finally {
       _loading = false;
-
       notifyListeners();
     }
   }

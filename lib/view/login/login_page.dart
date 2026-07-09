@@ -50,7 +50,6 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            // En Windows el formulario no se estira demasiado
             constraints: const BoxConstraints(maxWidth: 420),
             child: Card(
               elevation: 6,
@@ -67,10 +66,8 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Text(
                       "Inicia Sesión",
-                      style: const TextStyle(fontSize: 26,fontWeight: FontWeight.bold),
-
+                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
                     ),
-                    // Logo
                     const SizedBox(height: 32),
                     Image.asset(
                       'assets/images/logo.png',
@@ -80,7 +77,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 32),
 
-                    // Campo usuario
                     TextField(
                       controller: _usuarioController,
                       decoration: InputDecoration(
@@ -94,7 +90,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 16),
 
-                    // Campo contraseña con ojo
                     TextField(
                       controller: _passwordController,
                       obscureText: !_verPassword,
@@ -106,9 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _verPassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
+                            _verPassword ? Icons.visibility_off : Icons.visibility,
                           ),
                           onPressed: () {
                             setState(() => _verPassword = !_verPassword);
@@ -119,7 +112,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 8),
 
-                    // Error
                     if (widget.viewModel.error != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
@@ -132,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 24),
 
-                    // Botón
+                    // Botón — siempre la misma altura, sin importar el estado
                     SizedBox(
                       width: double.infinity,
                       height: 48,
@@ -147,14 +139,30 @@ class _LoginPageState extends State<LoginPage> {
                             ? const SizedBox(
                           width: 22,
                           height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                          ),
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
                         )
                             : const Text(
                           'Ingresar',
                           style: TextStyle(fontSize: 16),
                         ),
+                      ),
+                    ),
+
+                    // Mensaje de sincronización, fuera del botón
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: widget.viewModel.sincronizando
+                          ? const Padding(
+                        key: ValueKey('sync-msg'),
+                        padding: EdgeInsets.only(top: 12),
+                        child: Text(
+                          'Sincronizando...',
+                          style: TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      )
+                          : const SizedBox(
+                        key: ValueKey('sync-msg-empty'),
+                        height: 0,
                       ),
                     ),
                   ],

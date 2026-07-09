@@ -43,7 +43,8 @@ CREATE TABLE vales(
     validado_por TEXT,
     comentario_validacion TEXT,
     sync_status INTEGER NOT NULL,
-    liberado INTEGER NOT NULL
+    liberado INTEGER NOT NULL,
+    fecha_liberacion TEXT
 );
 ''';
 
