@@ -1,6 +1,6 @@
 class SesionUsuario {
 
-  final int? usuarioId;
+  final String? usuarioId;
 
   final String nombre;
 

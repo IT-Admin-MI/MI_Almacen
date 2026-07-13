@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mi_almacen/models/Proyecto.dart';
 import 'package:mi_almacen/models/Vale_Item.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/services/notification_api_service.dart';
 import 'package:mi_almacen/services/sync_service.dart';
 
 import '../models/Vale.dart';
@@ -92,27 +93,31 @@ class AprobacionValesViewModel
     notifyListeners();
   }
 
-  Future<void> aprobarVale(
-      String valeId,
-      String comentario,
-      ) async {
-
-    final sesion =
-    await authService.obtenerSesion();
+  Future<void> aprobarVale(String valeId, String comentario) async {
+    final sesion = await authService.obtenerSesion();
 
     await valeService.aprobarVale(
       valeId,
-      sesion?.usuarioId ?? 0,
+      sesion?.usuarioId ?? '',
       sesion?.nombre ?? '',
       comentario,
     );
 
-    _vales.removeWhere(
-          (v) => v.id == valeId,
-    );
+    try {
+      await NotificationApiService.notificarVale(
+        valeId: valeId,
+        tipo: 'aprobado',
+      );
+    } catch (e) {
+      // La notificación es "best effort": el vale ya quedó aprobado
+      // arriba, esto nunca debe frenar el flujo.
+      print('ERROR NOTIFICANDO APROBACION (vale ya fue aprobado igual): $e');
+    }
 
+    _vales.removeWhere((v) => v.id == valeId);
     notifyListeners();
   }
+
   Future<void> actualizarVale(Vale vale) async {
     await valeService.actualizarVale(vale);
   }
@@ -131,7 +136,7 @@ class AprobacionValesViewModel
 
     await valeService.rechazarVale(
       valeId,
-      sesion?.usuarioId ?? 0,
+      sesion?.usuarioId ?? '',
       sesion?.nombre ?? '',
       comentario,
     );

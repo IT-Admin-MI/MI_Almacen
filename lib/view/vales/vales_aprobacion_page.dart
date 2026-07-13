@@ -53,7 +53,6 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
     for (final item in vale.items) {
       final key = '${vale.id}_${item.material.codigo}';
       final editable = _editableItems[key];
-      print('guardando key: $key');
       _editableItems.putIfAbsent(
         key,
             () => ValeItem(

@@ -65,15 +65,27 @@ class ValeSyncServiceImpl
 
   @override
   Future<void> descargarVales() async {
-    final vales = await firebaseService.obtenerVales();
+    final valesFirebase = await firebaseService.obtenerVales();
+    final idsFirebase = valesFirebase.map((v) => v.id).toSet();
 
-    for (final vale in vales) {
+    // 1. Upsert: insertar nuevos, actualizar existentes
+    for (final vale in valesFirebase) {
       final existente = await valeRepository.getById(vale.id);
-
       if (existente == null) {
         await valeRepository.insert(vale);
       } else {
         await valeRepository.update(vale);
+      }
+    }
+
+    // 2. Espejo: borrar localmente lo que ya no existe en Firebase.
+    //    Solo se borran vales YA sincronizados (sync_status == 1) para no
+    //    perder vales creados/editados offline que aún no se han subido.
+    final valesLocales = await valeRepository.getAll();
+
+    for (final local in valesLocales) {
+      if (!idsFirebase.contains(local.id) && local.syncStatus == 1) {
+        await valeRepository.delete(local.id);
       }
     }
   }

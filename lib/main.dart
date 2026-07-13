@@ -5,6 +5,8 @@ import 'package:mi_almacen/repositories/compra_repository_impl.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
 import 'package:mi_almacen/services/compra_sync_Service_impl.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mi_almacen/services/notification_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
@@ -42,7 +44,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   if (!kIsWeb &&
       (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     sqfliteFfiInit();
@@ -52,6 +53,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  final notificationService = NotificationServiceImpl();
+  await notificationService.init();
 
   // ==========================
   // CORE (una sola vez, antes de runApp)
@@ -95,6 +99,13 @@ Future<void> main() async {
     usuarioRepository: usuarioRepository,
   );
 
+// NUEVO — justo aquí:
+  notificationService.escucharRefrescoDeToken(() async {
+    final usuario = await authService.usuarioActual();
+    return usuario?.id;
+  });
+
+
   final valeService = ValeServiceImpl(
     valeRepository: valeRepository,
     databaseHelper: databaseHelper,
@@ -119,6 +130,7 @@ Future<void> main() async {
     valeSyncService: valeSyncService,
     compraSyncService: compraSyncService,
   );
+
 
   // ==========================
   // VIEWMODELS
@@ -147,7 +159,8 @@ Future<void> main() async {
 
   final loginViewModel = LoginViewModel(
       authService: authService,
-      syncService: syncService);
+      syncService: syncService,
+      notificationService: notificationService);
 
   final valeViewModel = ValeViewModel(
     materialRepository: materialRepository,
@@ -179,7 +192,7 @@ Future<void> main() async {
   // ==========================
   // APP
   // ==========================
-
+  await dotenv.load(fileName: ".env");
   runApp(
     MyApp(
       authService: authService,

@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/constants/roles.dart';
@@ -88,6 +89,10 @@ class _HomePageState
 
     cargarUsuario();
     cargarProyectos();
+
+    FirebaseMessaging.instance.getToken().then((token) {
+      print('TOKEN ACTUAL DEL DISPOSITIVO: $token');
+    });
   }
 
   Color _colorParaOrden(int orden, int totalActivos) {

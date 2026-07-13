@@ -39,19 +39,25 @@ class FirebaseServiceImpl implements FirebaseService {
       return null;
     }
 
-    final data =
-    result.docs.first.data();
+    final doc = result.docs.first;
+    final data = doc.data();
+
+    final firebaseUserId = doc.id;
+
+    print('ID FIREBASE: $firebaseUserId');
     print('DATOS FIREBASE: $data');
     if (data['password'] != password) {
       return null;
     }
     print('LOGIN CORRECTO');
     return Usuario(
+      id: firebaseUserId,
       nombre: data['nombre'],
       password: data['password'],
       descripcion: data['descripcion'],
       rol: data['rol'],
-      id: null,
+      fcmToken:data['fcmToken'],
+      supervisorId:data['supervisorId'],
       departamento: data['departamento'],
     );
   }

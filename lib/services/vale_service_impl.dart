@@ -24,7 +24,7 @@ class ValeServiceImpl implements ValeService {
   @override
   Future<void> aprobarVale(
       String valeId,
-      int usuarioId,
+      String usuarioId,
       String usuarioNombre,
       String comentario,
       ) async {
@@ -41,7 +41,7 @@ class ValeServiceImpl implements ValeService {
   @override
   Future<void> rechazarVale(
       String valeId,
-      int usuarioId,
+      String usuarioId,
       String usuarioNombre,
       String comentario,
       ) async {

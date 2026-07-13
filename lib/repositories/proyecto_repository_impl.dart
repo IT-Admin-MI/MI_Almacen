@@ -112,37 +112,27 @@ class ProyectoRepositoryImpl
 
   @override
   Future<void> sincronizarFirebase() async {
+    final proyectosFirebase = await firebaseService.obtenerProyectos();
+    final clavesFirebase = proyectosFirebase.map((p) => p.clave).toSet();
 
-    print('SINCRONIZANDO FIREBASE');
-    final proyectos =
-    await firebaseService
-        .obtenerProyectos();
-
-    print(
-      'PROYECTOS RECIBIDOS: ${proyectos.length}',
-    );
-    for (final proyecto in proyectos) {
-
-      final existente =
-      await getByClave(
-        proyecto.clave,
-      );
-
+    for (final proyecto in proyectosFirebase) {
+      final existente = await getByClave(proyecto.clave);
       if (existente == null) {
-
-        await insert(
-          proyecto,
-        );
-
+        await insert(proyecto);
       } else {
+        await update(proyecto);
+      }
+    }
 
-        await update(
-          proyecto,
-        );
+    // Espejo: borrar localmente los proyectos que ya no existen en Firebase.
+    final proyectosLocales = await getAll();
+
+    for (final local in proyectosLocales) {
+      if (!clavesFirebase.contains(local.clave)) {
+        await delete(local.clave);
       }
     }
   }
-
   @override
   Future<void> sincronizarProyectoFirebase(Proyecto proyecto) async {
     await firebaseService.actualizarProyecto(proyecto);

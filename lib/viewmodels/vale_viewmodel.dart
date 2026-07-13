@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:mi_almacen/models/Usuario.dart';
+import 'package:mi_almacen/services/notification_api_service.dart';
 import 'package:mi_almacen/services/vate_sync_service.dart';
 import '../models/Material.dart';
 import '../models/Proyecto.dart';
@@ -165,34 +166,28 @@ class ValeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> aprobarVale(
-      Vale vale,
-      ) async {
-
+  Future<void> aprobarVale(Vale vale) async {
     final actualizado = Vale(
       id: vale.id,
-      fechaCreacion:
-      vale.fechaCreacion,
-      usuarioNombre:
-      vale.usuarioNombre,
-      usuarioRol:
-      vale.usuarioRol,
-      departamento:
-      vale.departamento,
+      fechaCreacion: vale.fechaCreacion,
+      usuarioNombre: vale.usuarioNombre,
+      usuarioRol: vale.usuarioRol,
+      departamento: vale.departamento,
       estado: 1,
       items: vale.items,
-      fechaValidacion:
-      DateTime.now(),
-      syncStatus:
-      vale.syncStatus,
+      fechaValidacion: DateTime.now(),
+      syncStatus: vale.syncStatus,
       liberado: 0,
     );
 
-    await valeRepository.update(
-      actualizado,
-    );
-
+    await valeRepository.update(actualizado);
     await cargarPendientes();
+
+    // NUEVO
+    await NotificationApiService.notificarVale(
+      valeId: vale.id,
+      tipo: 'aprobado',
+    );
   }
 
   Future<void> rechazarVale(
@@ -469,6 +464,11 @@ class ValeViewModel extends ChangeNotifier {
       await valeSyncService
           .sincronizarVale(
         vale,
+      );
+
+      await NotificationApiService.notificarVale(
+        valeId: vale.id,
+        tipo: 'pendiente',
       );
 
       limpiarVale();

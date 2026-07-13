@@ -19,6 +19,7 @@ dependencies:
   sqflite_common_ffi: ^2.3.6
   cupertino_icons: ^1.0.8
   uuid: ^4.4.0
+  flutter_dotenv: ^5.2.1
 
   excel: ^4.0.6      # crear/editar xlsx real (con estilos, no solo csv)
   share_plus: ^10.1.0
@@ -61,3 +62,4 @@ flutter:
     - assets/images/logo_ext.png
     - assets/images/logo_bn.png
     - assets/images/logo_letter.png
+    - .env

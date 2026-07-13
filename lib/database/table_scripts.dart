@@ -1,11 +1,13 @@
 const String createUsuariosTable = '''
 CREATE TABLE usuarios(
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   nombre TEXT NOT NULL,
   password TEXT NOT NULL,
   departamento TEXT NOT NULL,
   descripcion TEXT NOT NULL,
-  rol INTEGER NOT NULL
+  rol INTEGER NOT NULL,
+  fcmToken TEXT NOT NULL,
+  supervisorId TEXT NOT NULL
 )
 ''';
 

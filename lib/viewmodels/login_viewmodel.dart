@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../services/auth_service.dart';
 import '../services/sync_service.dart'; // ← NUEVO
+import '../services/notification_service.dart';
 
 class LoginViewModel extends ChangeNotifier {
 
   final AuthService authService;
+
   final SyncService syncService; // ← NUEVO
+  final NotificationService notificationService;
 
   LoginViewModel({
     required this.authService,
-    required this.syncService, // ← NUEVO
+    required this.syncService,
+    required this.notificationService, // ← NUEVO
   });
 
   bool _loading = false;
@@ -30,8 +34,6 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print("Usuario Login: $usuario Contraseña Login: $password");
-
       final ok = await authService.login(usuario, password);
 
       if (!ok) {
@@ -43,6 +45,15 @@ class LoginViewModel extends ChangeNotifier {
       // el proceso, para que HomePage ya encuentre datos frescos.
       _sincronizando = true;
       notifyListeners();
+
+      try {
+        final usuarioActual = await authService.usuarioActual(); // o el getter que ya uses
+        if (usuarioActual != null) {
+          await notificationService.saveTokenForUser(usuarioActual.id??'');
+        }
+      } catch (e) {
+        print('ERROR GUARDANDO TOKEN FCM: $e');
+      }
 
       try {
         await syncService.sincronizarTodo().timeout(

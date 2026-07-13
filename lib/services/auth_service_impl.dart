@@ -28,9 +28,6 @@ class AuthServiceImpl implements AuthService {
       String password,
       ) async {
 
-    print('======== LOGIN ========');
-    print('kIsWeb: ${PlatformService.esWeb}');
-    print('usaSQLite: ${PlatformService.usaSQLite}');
     final usuarioFirebase =
     await firebaseService.login(
       nombre,
@@ -41,10 +38,7 @@ class AuthServiceImpl implements AuthService {
       return false;
     }
 
-    print('esWeb=${PlatformService.esWeb}');
-    print('usaSQLite=${PlatformService.usaSQLite}');
     if (PlatformService.usaSQLite) {
-      print('ENTRANDO A SQLITE');
       final usuarioLocal =
       await usuarioRepository.getByNombre(
         usuarioFirebase.nombre,
@@ -66,6 +60,8 @@ class AuthServiceImpl implements AuthService {
             descripcion:
             usuarioFirebase.descripcion,
             rol: usuarioFirebase.rol,
+            fcmToken: usuarioFirebase.fcmToken,
+            supervisorId: usuarioFirebase.supervisorId,
             departamento: usuarioFirebase.departamento,
           ),
         );
@@ -75,7 +71,7 @@ class AuthServiceImpl implements AuthService {
     final sesion = SesionUsuario(
       nombre: usuarioFirebase.nombre,
       rol: usuarioFirebase.rol,
-      usuarioId: usuarioFirebase.id ?? 0,
+      usuarioId: usuarioFirebase.id ?? '',
       departamento: usuarioFirebase.departamento,
     );
 
@@ -114,8 +110,6 @@ class AuthServiceImpl implements AuthService {
     await SharedPreferences.getInstance();
 
 
-    print('PREF KEYS: ${prefs.getKeys()}');
-    print('SESSION: ${prefs.getString(sessionKey)}');
 
     return prefs.containsKey(
       sessionKey,
@@ -153,14 +147,6 @@ class AuthServiceImpl implements AuthService {
 
       final sesion =
       await obtenerSesion();
-
-
-      print(
-        'SESSION READ => '
-            'nombre=${sesion?.nombre} '
-            'rol=${sesion?.rol} '
-            'departamento=${sesion?.departamento}',
-      );
 
       return sesion != null;
     }
