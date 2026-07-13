@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 import '../../models/Material.dart';
 import '../../models/Proyecto.dart';
@@ -228,14 +229,20 @@ class _ValesPageState
                 child: ElevatedButton(
                   onPressed: viewModel.puedeCrearVale && !viewModel.creandoVale
                       ? () async {
+                    final controller = StatusOverlay.mostrarCargando(
+                      context,
+                      mensaje: 'Enviando...',
+                    );
+
                     final resultado = await viewModel.crearVale();
+
                     if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(resultado
-                            ? 'Vale creado correctamente'
-                            : 'Error al crear el vale'),
-                      ),
+
+                    controller.completar(
+                      exito: resultado,
+                      mensaje: resultado
+                          ? 'Vale creado correctamente'
+                          : 'Error al crear el vale',
                     );
                   }
                       : null,
@@ -340,6 +347,9 @@ class _ValesPageState
                       DropdownMenuItem(value: 'mm',  child: Text('mm')),
                       DropdownMenuItem(value: 'L',   child: Text('L')),
                       DropdownMenuItem(value: 'ml',  child: Text('ml')),
+                      DropdownMenuItem(value: 'm²',   child: Text('m²')),
+                      DropdownMenuItem(value: 'm³',  child: Text('m³')),
+
                     ],
                     onChanged: (value) {
                       if (value == null) return;

@@ -3,6 +3,7 @@ import 'package:mi_almacen/models/Proyecto.dart';
 import 'package:mi_almacen/models/Vale.dart';
 import 'package:mi_almacen/models/Vale_Item.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 class AprobacionValesPage extends StatefulWidget {
   final AprobacionValesViewModel viewModel;
@@ -111,8 +112,33 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
           body: RefreshIndicator(
             onRefresh: () async {
               setState(() => _refrescando = true);
-              await widget.viewModel.actualizar();
-              if (mounted) setState(() => _refrescando = false);
+
+              final controller = StatusOverlay.mostrarCargando(
+                context,
+                mensaje: 'Actualizando vales...',
+              );
+
+              try {
+                await widget.viewModel.actualizar();
+
+                if (!mounted) return;
+
+                controller.completar(
+                  exito: true,
+                  mensaje: 'Vales actualizados correctamente',
+                );
+              } catch (_) {
+                if (!mounted) return;
+
+                controller.completar(
+                  exito: false,
+                  mensaje: 'Error al actualizar los vales',
+                );
+              } finally {
+                if (mounted) {
+                  setState(() => _refrescando = false);
+                }
+              }
             },
               child: widget.viewModel.cargando
                   ? const Center(child: CircularProgressIndicator())

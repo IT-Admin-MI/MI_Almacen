@@ -5,6 +5,7 @@ import 'package:mi_almacen/services/excel_service_impl.dart';
 import 'package:mi_almacen/view/vales/historial_liberacion_vales_page.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/historial_liberacion_vales_viewmodel.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 class LiberacionValesPage extends StatefulWidget {
   final LiberacionValesViewModel viewModel;
@@ -89,17 +90,34 @@ class _LiberacionValesPageState
               : SafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
+                setState(() => _refrescando = true);
 
-                setState(() {
-                  _refrescando = true;
-                });
+                final controller = StatusOverlay.mostrarCargando(
+                  context,
+                  mensaje: 'Actualizando...',
+                );
 
-                await widget.viewModel.actualizar();
+                try {
+                  await widget.viewModel.actualizar();
 
-                setState(() {
-                  _refrescando = false;
-                });
+                  if (!mounted) return;
 
+                  controller.completar(
+                    exito: true,
+                    mensaje: 'Vales actualizados correctamente',
+                  );
+                } catch (_) {
+                  if (!mounted) return;
+
+                  controller.completar(
+                    exito: false,
+                    mensaje: 'Error al actualizar los vales',
+                  );
+                } finally {
+                  if (mounted) {
+                    setState(() => _refrescando = false);
+                  }
+                }
               },
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -462,19 +480,24 @@ class _LiberacionValesPageState
     );
 
     if(confirmar == true){
-
-
-      await widget.viewModel
-          .actualizarLiberacionVale(
-
-        valeId:
-        vale.id,
-
-        liberado:
-        1,
+      final controller = StatusOverlay.mostrarCargando(
+        context,
+        mensaje: 'Entregando vale...',
       );
 
+      final ok = await widget.viewModel.actualizarLiberacionVale(
+        valeId: vale.id,
+        liberado: 1,
+      );
 
+      if (!mounted) return;
+
+      controller.completar(
+        exito: ok,
+        mensaje: ok
+            ? 'Vale entregado correctamente'
+            : 'Error al entregar el vale',
+      );
     }
   }
 
@@ -570,23 +593,25 @@ class _LiberacionValesPageState
 
 
     if(confirmar == true){
-
-
-      await widget.viewModel
-          .actualizarLiberacionVale(
-
-        valeId:
-        vale.id,
-
-        liberado:
-        -1,
-
-        comentario:
-        comentarioController.text,
-
+      final controller = StatusOverlay.mostrarCargando(
+        context,
+        mensaje: 'Rechazando vale...',
       );
 
+      final ok = await widget.viewModel.actualizarLiberacionVale(
+        valeId: vale.id,
+        liberado: -1,
+        comentario: comentarioController.text,
+      );
 
+      if (!mounted) return;
+
+      controller.completar(
+        exito: ok,
+        mensaje: ok
+            ? 'Vale rechazado correctamente'
+            : 'Error al rechazar el vale',
+      );
     }
 
   }

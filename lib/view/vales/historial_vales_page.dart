@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 import '../../models/Vale.dart';
 import '../../viewmodels/historial_vales_viewmodel.dart';
@@ -70,8 +71,31 @@ class _HistorialValesPageState
           body: widget.viewModel.cargando
               ? const Center(child: CircularProgressIndicator())
               : SafeArea(
-              child: RefreshIndicator(
-            onRefresh: widget.viewModel.actualizar,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                final controller = StatusOverlay.mostrarCargando(
+                  context,
+                  mensaje: 'Actualizando historial...',
+                );
+
+                try {
+                  await widget.viewModel.actualizar();
+
+                  if (!mounted) return;
+
+                  controller.completar(
+                    exito: true,
+                    mensaje: 'Historial actualizado correctamente',
+                  );
+                } catch (e) {
+                  if (!mounted) return;
+
+                  controller.completar(
+                    exito: false,
+                    mensaje: 'Error al actualizar el historial',
+                  );
+                }
+              },
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [

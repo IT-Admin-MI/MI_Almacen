@@ -79,7 +79,7 @@ class _AdminDbPageState extends State<AdminDbPage> {
     _CampoConfig(key: 'fechaEntrega', label: 'Fecha entrega (ISO8601)'),
   ];
 
-  static const _unidades = ['pza', 'M', 'cm', 'mm', 'L', 'ml'];
+  static const _unidades = ['pza', 'M', 'cm', 'mm', 'L', 'ml','m²','m³'];
 
   Future<void> _editarFila({
 

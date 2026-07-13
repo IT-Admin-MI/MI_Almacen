@@ -118,27 +118,30 @@ class LiberacionValesViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> actualizarLiberacionVale({
+  Future<bool> actualizarLiberacionVale({
     required String valeId,
     required int liberado,
     String? comentario,
   }) async {
+    try {
+      await valeRepository.actualizarLiberacionVale(
+        valeId: valeId,
+        liberado: liberado,
+      );
 
+      await firebaseService.actualizarLiberacionVale(
+        id: valeId,
+        liberado: liberado,
+        comentario: comentario,
+        liberadoPor: "ALMACENISTA",
+      );
 
-    await valeRepository.actualizarLiberacionVale(
-      valeId: valeId,
-      liberado: liberado,
-    );
+      await cargarVales();
 
-
-    await firebaseService.actualizarLiberacionVale(
-      id: valeId,
-      liberado: liberado,
-      comentario: comentario,
-      liberadoPor: "ALMACENISTA",
-    );
-
-    await cargarVales();
-
+      return true;
+    } catch (e) {
+      debugPrint('Error al actualizar liberación del vale: $e');
+      return false;
+    }
   }
 }
