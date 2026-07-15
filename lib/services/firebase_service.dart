@@ -45,4 +45,5 @@ abstract class FirebaseService {
 
   Future<void> guardarHerramienta(HerramientaPrestamo herramienta);
   Future<List<HerramientaPrestamo>> obtenerHerramientas();
+  Future<List<Usuario>> obtenerUsuarios();
 }

@@ -24,4 +24,5 @@ abstract class UsuarioRepository {
       int id,
       );
 
+  Future<void> reemplazarUsuarios(List<Usuario> usuarios);
 }

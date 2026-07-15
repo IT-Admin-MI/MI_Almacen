@@ -17,6 +17,18 @@ class ImageStorageServiceImpl implements ImageStorageService {
         .child('herramientas_prestamo')
         .child('$herramientaId.$extension');
 
+    print('SUBIENDO: ${archivo.path}');
+    print('DESTINO: ${ref.fullPath}');
+    print('EXISTE LOCAL: ${await archivo.exists()}');
+
+    final task = await ref.putFile(archivo);
+
+    print('STATE: ${task.state}');
+
+    final url = await ref.getDownloadURL();
+
+    print('URL: $url');
+
     await ref.putFile(archivo);
 
     return await ref.getDownloadURL();

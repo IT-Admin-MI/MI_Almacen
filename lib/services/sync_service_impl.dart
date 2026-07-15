@@ -31,7 +31,7 @@ class SyncServiceImpl implements SyncService {
     await _intentar(() => sincronizarProyectos());
     await _intentar(() => sincronizarVales());
     await _intentar(() => sincronizarCompras());
-    //await _intentar(() => sincronizarMateriales());
+    await _intentar(() => sincronizarMateriales());
   }
 
   Future<void> _intentar(Future<void> Function() accion) async {

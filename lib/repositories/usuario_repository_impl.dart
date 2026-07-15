@@ -107,4 +107,17 @@ class UsuarioRepositoryImpl implements UsuarioRepository {
       whereArgs: [id],
     );
   }
+
+  Future<void> reemplazarUsuarios(List<Usuario> usuarios) async {
+    final db = await databaseHelper.database;
+
+    await db.delete('usuarios');
+
+    for (final usuario in usuarios) {
+      await db.insert(
+        'usuarios',
+        usuario.toMap(),
+      );
+    }
+  }
 }

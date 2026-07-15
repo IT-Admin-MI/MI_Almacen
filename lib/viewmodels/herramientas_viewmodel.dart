@@ -1,8 +1,11 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mi_almacen/models/Material.dart';
 import 'package:mi_almacen/models/herramienta_prestamo.dart';
+import 'package:mi_almacen/repositories/material_repository.dart';
+import 'package:mi_almacen/services/firebase_service_impl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/Usuario.dart';
 import '../repositories/usuario_repository.dart';
@@ -16,20 +19,50 @@ class HerramientasViewModel extends ChangeNotifier {
   final HerramientaSyncService herramientaSyncService;
   final UsuarioRepository usuarioRepository;
   final AuthService authService;
+  final FirebaseServiceImpl firebaseService;
+  final MaterialRepository materialRepository;
 
   HerramientasViewModel({
     required this.herramientaService,
     required this.herramientaSyncService,
     required this.usuarioRepository,
     required this.authService,
+    required this.firebaseService,
+    required this.materialRepository,
   });
 
   bool _cargando = false;
   bool get cargando => _cargando;
 
   List<HerramientaPrestamo> _herramientas = [];
-  List<HerramientaPrestamo> get herramientas =>
-      List.unmodifiable(_herramientas);
+
+  List<HerramientaPrestamo> get herramientas {
+    if (_departamentoSeleccionado == null || _departamentoSeleccionado!.isEmpty) {
+      return List.unmodifiable(_herramientas);
+    }
+
+    final usuariosDelDepartamento = _usuarios.where(
+          (u) => u.departamento.trim().toLowerCase() ==
+          _departamentoSeleccionado!.trim().toLowerCase(),
+    );
+
+    final idsDelDepartamento = usuariosDelDepartamento
+        .map((u) => u.id)
+        .whereType<String>() // descarta ids nulos
+        .toSet();
+
+    final nombresDelDepartamento = usuariosDelDepartamento
+        .map((u) => u.nombre)
+        .toSet();
+
+    return List.unmodifiable(
+      _herramientas.where(
+            (h) =>
+        idsDelDepartamento.contains(h.usuarioId) ||
+            nombresDelDepartamento.contains(h.usuarioNombre),
+      ),
+    );
+  }
 
   List<Usuario> _usuarios = [];
   List<Usuario> get usuarios => List.unmodifiable(_usuarios);
@@ -39,6 +72,14 @@ class HerramientasViewModel extends ChangeNotifier {
 
   Usuario? _usuarioActual;
   Usuario? get usuarioActual => _usuarioActual;
+
+  List<Material> _resultadosBusquedaMaterial = [];
+
+  List<Material> get resultadosBusquedaMaterial =>
+      List.unmodifiable(_resultadosBusquedaMaterial);
+
+  String? _departamentoSeleccionado;
+  String? get departamentoSeleccionado => _departamentoSeleccionado;
 
   void cambiarFiltro(bool value) {
     _soloPrestadas = value;
@@ -70,6 +111,11 @@ class HerramientasViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final usuarios = await firebaseService.obtenerUsuarios();
+      await usuarioRepository.reemplazarUsuarios(usuarios);
+      _usuarios = usuarios;
+      notifyListeners();
+
       await herramientaSyncService.sincronizarPendientes();
       await herramientaSyncService.descargarHerramientas();
       await cargar();
@@ -196,5 +242,72 @@ class HerramientasViewModel extends ChangeNotifier {
     await File(foto.path).copy(destino.path);
 
     return destino.path;
+  }
+
+  Future<bool> reutilizarPrestamo({
+    required HerramientaPrestamo herramienta,
+    required Usuario usuarioDestino,
+  }) async {
+
+    if (_usuarioActual == null) return false;
+
+    try {
+
+      await herramientaService.reutilizarPrestamo(
+        id: herramienta.id,
+        usuarioId: usuarioDestino.id ?? '',
+        usuarioNombre: usuarioDestino.nombre,
+        entregadoPorId: _usuarioActual!.id ?? '',
+        entregadoPorNombre: _usuarioActual!.nombre,
+      );
+
+      await cargar();
+
+      return true;
+
+    } catch(e){
+
+      debugPrint(e.toString());
+
+      return false;
+
+    }
+
+  }
+
+  Future<void> buscarMaterial(String texto) async {
+
+    if (texto.trim().isEmpty) {
+
+      _resultadosBusquedaMaterial = [];
+
+      notifyListeners();
+
+      return;
+    }
+
+    _resultadosBusquedaMaterial = await materialRepository.buscar(texto);
+
+    notifyListeners();
+
+  }
+  void limpiarBusquedaMaterial() {
+
+    _resultadosBusquedaMaterial = [];
+
+    notifyListeners();
+
+  }
+
+  /// Lista de departamentos únicos, extraída de los usuarios cargados.
+  List<String> get departamentos {
+    final unicos = _usuarios.map((u) => u.departamento).toSet().toList();
+    unicos.sort();
+    return unicos;
+  }
+
+  void cambiarDepartamento(String? departamento) {
+    _departamentoSeleccionado = departamento;
+    notifyListeners();
   }
 }

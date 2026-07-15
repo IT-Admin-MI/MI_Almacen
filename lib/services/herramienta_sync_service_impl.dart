@@ -22,24 +22,24 @@ class HerramientaSyncServiceImpl implements HerramientaSyncService {
     try {
       var actual = herramienta;
 
-      // Si hay imagen local pendiente de subir, se sube primero.
-      if (actual.imagenUrl == null &&
-          actual.imagenPath != null &&
-          actual.imagenPath!.isNotEmpty) {
-        final archivo = File(actual.imagenPath!);
+//       // Si hay imagen local pendiente de subir, se sube primero.
+//      if (actual.imagenUrl == null &&
+//          actual.imagenPath != null &&
+//          actual.imagenPath!.isNotEmpty) {
+//        final archivo = File(actual.imagenPath!);
 
-        if (await archivo.exists()) {
-          final url = await imageStorageService.subirImagen(
-            herramientaId: actual.id,
-            archivo: archivo,
-          );
+//        if (await archivo.exists()) {
+//          final url = await imageStorageService.subirImagen(
+//            herramientaId: actual.id,
+//            archivo: archivo,
+//          );
 
-          actual = actual.copyWith(imagenUrl: url);
+//          actual = actual.copyWith(imagenUrl: url);
 
           // Persistir la URL localmente para no volver a subir la imagen.
-          await herramientaRepository.update(actual);
-        }
-      }
+//          await herramientaRepository.update(actual);
+//        }
+//      }
 
       await firebaseService.guardarHerramienta(actual);
       await herramientaRepository.marcarSincronizado(actual.id);

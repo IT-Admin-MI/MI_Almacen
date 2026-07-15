@@ -73,15 +73,10 @@ class _SeguimientoComprasPageState
         ),
 
         floatingActionButton:
-
         FloatingActionButton(
-
           onPressed: _mostrarDialogoSolicitud,
-
           child: const Icon(Icons.add),
-
         ),
-
         body: TabBarView(
 
           children: [

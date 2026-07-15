@@ -134,7 +134,7 @@ class HerramientaPrestamo {
           ? DateTime.parse(map['fecha_devolucion'] as String)
           : null,
       syncStatus: map['sync_status'] as int? ?? 0,
-      codigo: map['codigo'] as String,
+      codigo: map['codigo']?.toString(),
     );
   }
 
@@ -144,7 +144,7 @@ class HerramientaPrestamo {
       nombre: data['nombre'] ?? '',
       comentario: data['comentario'],
       imagenPath: null, // nunca viene de Firebase, es local del dispositivo
-      imagenUrl: data['imagen_url'],
+      imagenUrl: null,
       usuarioId: data['usuario_id'] ?? '',
       usuarioNombre: data['usuario_nombre'] ?? '',
       entregadoPorId: data['entregado_por_id'] ?? '',
@@ -157,7 +157,7 @@ class HerramientaPrestamo {
           ? DateTime.parse(data['fecha_devolucion'])
           : null,
       syncStatus: 1,
-      codigo: data['codigo'] ?? '',
+      codigo: data['codigo']?.toString(),
     );
   }
 }

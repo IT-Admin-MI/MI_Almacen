@@ -129,7 +129,9 @@ Future<void> main() async {
     herramientaService: herramientaService,
     herramientaSyncService: herramientaSyncService,
     usuarioRepository: usuarioRepository, // ya existe en main.dart
-    authService: authService,             // ya existe en main.dart
+    authService: authService,
+    firebaseService: firebaseService,
+    materialRepository: materialRepository,             // ya existe en main.dart
   );
 
 // NUEVO — justo aquí:

@@ -63,4 +63,40 @@ class HerramientaServiceImpl implements HerramientaService {
   Future<List<HerramientaPrestamo>> obtenerPrestadas() {
     return herramientaRepository.getPrestadas();
   }
+
+  @override
+  Future<void> reutilizarPrestamo({
+    required String id,
+    required String usuarioId,
+    required String usuarioNombre,
+    required String entregadoPorId,
+    required String entregadoPorNombre,
+  }) async {
+
+    final actual = await herramientaRepository.getById(id);
+
+    if (actual == null) return;
+
+    final actualizada = actual.copyWith(
+      usuarioId: usuarioId,
+      usuarioNombre: usuarioNombre,
+
+      entregadoPorId: entregadoPorId,
+      entregadoPorNombre: entregadoPorNombre,
+
+      recibidoPorId: null,
+      recibidoPorNombre: null,
+
+      estado: EstadoHerramienta.prestado,
+
+      fechaPrestamo: DateTime.now(),
+      fechaDevolucion: null,
+
+      syncStatus: 0,
+    );
+
+    await herramientaRepository.update(actualizada);
+
+    await herramientaSyncService.sincronizarHerramienta(actualizada);
+  }
 }

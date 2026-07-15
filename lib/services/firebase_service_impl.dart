@@ -615,4 +615,20 @@ class FirebaseServiceImpl implements FirebaseService {
         .map((doc) => HerramientaPrestamo.fromFirebase(doc.data()))
         .toList();
   }
+
+  @override
+  Future<List<Usuario>> obtenerUsuarios() async {
+    final snapshot = await firestore.collection('usuarios').get();
+
+    print('USUARIOS FIREBASE: ${snapshot.docs.length}');
+
+    for (final doc in snapshot.docs) {
+      print(doc.data());
+    }
+
+    return snapshot.docs
+        .map((d) => Usuario.fromMap(d.data()))
+        .toList();
+  }
+
 }

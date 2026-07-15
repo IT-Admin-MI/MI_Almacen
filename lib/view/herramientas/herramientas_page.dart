@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/models/herramienta_prestamo.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 import '../../models/Usuario.dart';
 import '../../viewmodels/herramientas_viewmodel.dart';
 
@@ -24,6 +25,7 @@ class _HerramientasPageState extends State<HerramientasPage> {
   Future<void> _mostrarDialogoNuevoPrestamo() async {
     final nombreCtrl = TextEditingController();
     final comentarioCtrl = TextEditingController();
+    final codigoController = TextEditingController();
     Usuario? usuarioSeleccionado;
     String? imagenPath;
     String? errorNombre;
@@ -31,12 +33,16 @@ class _HerramientasPageState extends State<HerramientasPage> {
 
     await showDialog(
       context: context,
+
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               title: const Text('Nuevo préstamo'),
-              content: SingleChildScrollView(
+
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -49,26 +55,82 @@ class _HerramientasPageState extends State<HerramientasPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    TextField(
+                      controller: codigoController,
+                      decoration: const InputDecoration(
+                        labelText: "Código",
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) async {
+                        await widget.viewModel.buscarMaterial(value);
+                        setDialogState(() {});
+                      },
+                    ),
+
+                    if(widget.viewModel.resultadosBusquedaMaterial.isNotEmpty)
+
+                      Container(
+                        height: 180,
+
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+
+                        child: ListView.builder(
+                          itemCount:
+                          widget.viewModel.resultadosBusquedaMaterial.length,
+                          itemBuilder: (_,index){
+                            final material =
+                            widget.viewModel.resultadosBusquedaMaterial[index];
+                            return ListTile(
+                              dense: true,
+                              title: Text(material.descripcion),
+                              subtitle: Text(material.codigo),
+                              trailing: Text(material.existencia.toString()),
+                              onTap: () {
+
+                                codigoController.text = material.codigo;
+                                nombreCtrl.text = material.descripcion;
+
+                                widget.viewModel.limpiarBusquedaMaterial();
+
+                                setDialogState(() {});
+
+                              },
+                            );
+                          },
+                        ),
+                      ),
+
+                    const SizedBox(height: 12),
+
                     DropdownButtonFormField<Usuario>(
                       value: usuarioSeleccionado,
                       isExpanded: true,
-                      dropdownColor: Colors.white,
-                      decoration: InputDecoration(
-                        labelText: 'Prestado a',
-                        border: const OutlineInputBorder(),
-                        errorText: errorUsuario,
+
+                      decoration: const InputDecoration(
+                        labelText: 'Prestar a',
+                        border: OutlineInputBorder(),
                       ),
+
                       items: widget.viewModel.usuarios.map((u) {
                         return DropdownMenuItem<Usuario>(
                           value: u,
                           child: Text(
                             '${u.nombre} (${u.descripcion})',
                             overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         );
                       }).toList(),
-                      onChanged: (u) =>
-                          setDialogState(() => usuarioSeleccionado = u),
+
+                      onChanged: (usuario) {
+                        setDialogState(() {
+                          usuarioSeleccionado = usuario;
+                        });
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -109,7 +171,7 @@ class _HerramientasPageState extends State<HerramientasPage> {
                       ),
                   ],
                 ),
-              ),
+              ),),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -190,12 +252,13 @@ class _HerramientasPageState extends State<HerramientasPage> {
     if (ok == true) {
       final resultado = await widget.viewModel.registrarDevolucion(h.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resultado
-              ? 'Devolución registrada'
-              : 'Error al registrar la devolución'),
-        ),
+      StatusOverlay.mostrar(
+        context,
+        exito: resultado,
+        mensaje: resultado
+            ? 'Devolución registrada'
+            : 'Error al registrar la devolución',
+        duracion: const Duration(seconds: 2),
       );
     }
   }
@@ -234,6 +297,164 @@ class _HerramientasPageState extends State<HerramientasPage> {
     return const Icon(Icons.build, size: 40, color: Colors.grey);
   }
 
+  Future<void> _mostrarDialogoReutilizar(
+      HerramientaPrestamo herramienta) async {
+
+    Usuario? usuarioSeleccionado;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+
+            return AlertDialog(
+              titlePadding: const EdgeInsets.symmetric(vertical: 24, horizontal: 0),
+
+              // 2. Envuelve el texto en un Center o usa un Align
+              title: const Center(
+                child: Text("Prestar herramienta"),
+              ),
+
+              content: SizedBox(
+                width: 350,
+
+                child: SingleChildScrollView(
+
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+
+                    children: [
+
+                      CircleAvatar(
+                        radius: 35,
+                        backgroundColor: Colors.grey.shade200,
+                        child: _buildImagen(herramienta),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Text(
+                        herramienta.nombre,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      Text(
+                        "Último préstamo a\n${herramienta.usuarioNombre}",
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Nuevo usuario",
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      DropdownMenu<Usuario>(
+                        width: 320,
+
+                        initialSelection: usuarioSeleccionado,
+
+                        hintText: "Selecciona un usuario",
+
+                        onSelected: (u) {
+                          setState(() {
+                            usuarioSeleccionado = u;
+                          });
+                        },
+
+                        dropdownMenuEntries:
+
+                        widget.viewModel.usuarios.map((u) {
+
+                          return DropdownMenuEntry<Usuario>(
+
+                            value: u,
+
+                            label: u.nombre,
+
+                            leadingIcon: const Icon(Icons.person),
+
+                          );
+
+                        }).toList(),
+
+                      ),
+
+                    ],
+
+                  ),
+
+                ),
+
+              ),
+
+              actions: [
+
+                TextButton(
+
+                  onPressed: () => Navigator.pop(context),
+
+                  child: const Text("Cancelar"),
+
+                ),
+
+                FilledButton(
+
+                  onPressed: usuarioSeleccionado == null
+                      ? null
+                      : () async {
+
+                    final ok =
+                    await widget.viewModel.reutilizarPrestamo(
+                      herramienta: herramienta,
+                      usuarioDestino: usuarioSeleccionado!,
+                    );
+
+                    if (!mounted) return;
+                    Navigator.pop(context);
+                    StatusOverlay.mostrar(
+                      context,
+                      exito: ok,
+                      mensaje: ok
+                          ? 'Préstamo registrado'
+                          : 'Error al registrar el préstamo',
+                      duracion: const Duration(seconds: 2),
+                    );
+
+                  },
+
+                  child: const Text("Prestar"),
+
+                ),
+
+              ],
+
+            );
+
+          },
+
+        );
+
+      },
+
+    );
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -269,11 +490,37 @@ class _HerramientasPageState extends State<HerramientasPage> {
                       TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
+
                   SwitchListTile(
                     title: const Text('Mostrar solo prestadas'),
                     value: widget.viewModel.soloPrestadas,
                     onChanged: widget.viewModel.cambiarFiltro,
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DropdownButtonFormField<String?>(
+                      value: widget.viewModel.departamentoSeleccionado,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Filtrar por departamento',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Todos los departamentos'),
+                        ),
+                        ...widget.viewModel.departamentos.map(
+                              (d) => DropdownMenuItem<String?>(
+                            value: d,
+                            child: Text(d),
+                          ),
+                        ),
+                      ],
+                      onChanged: widget.viewModel.cambiarDepartamento,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: widget.viewModel.cargando
                         ? const Center(child: CircularProgressIndicator())
@@ -293,28 +540,59 @@ class _HerramientasPageState extends State<HerramientasPage> {
                             vertical: 6,
                           ),
                           child: ListTile(
+                            onLongPress: () {
+                              if (h.estado == EstadoHerramienta.devuelto) {
+                                _mostrarDialogoReutilizar(h);
+                              }
+                            },
+
                             leading: _buildImagen(h),
+
                             title: Text(h.nombre),
+
                             subtitle: Text(
                               'Prestado a: ${h.usuarioNombre}\n'
-                                  'Entregó: ${h.entregadoPorNombre} · '
                                   '${_formatearFecha(h.fechaPrestamo)}\n'
                                   'Estado: ${EstadoHerramienta.nombre(h.estado)}'
                                   '${h.comentario != null && h.comentario!.isNotEmpty ? '\n${h.comentario}' : ''}',
                             ),
+
                             isThreeLine: true,
+
                             trailing: prestada
-                                ? ElevatedButton(
-                              onPressed: () =>
-                                  _confirmarDevolucion(h),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
+                                ? SizedBox(
+                              height: 150,
+                              width: 45,
+                              child: ElevatedButton(
+                                onPressed: () => _confirmarDevolucion(h),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: EdgeInsets.zero,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.assignment_return,
+                                  size: 30,
+                                ),
                               ),
-                              child: const Text('Devolver'),
                             )
-                                : const Icon(Icons.check_circle,
-                                color: Colors.green),
+                                : Container(
+                              width: 45, // Ancho horizontal extendido
+                              height: 150, // Alto del contenedor
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withOpacity(0.2), // Fondo del rectángulo
+                                borderRadius: BorderRadius.circular(8), // Bordes redondeados
+                              ),
+                              child: const Icon(
+                                Icons.check_box_rounded,
+                                size: 35, // Ajustado para caber dentro del contenedor
+                                color: Colors.grey,
+                              ),
+                            )
+
                           ),
                         );
                       },
