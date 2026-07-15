@@ -1,5 +1,6 @@
 import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/models/CompraItem.dart';
+import 'package:mi_almacen/models/compra_solicitud.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/database/database_helper.dart';
 import 'package:sqflite/sqflite.dart';
@@ -34,9 +35,16 @@ class CompraRepositoryImpl implements CompraRepository {
   }
 
   @override
-  Future<void> deleteItems(String compraId) {
-    // TODO: implement deleteItems
-    throw UnimplementedError();
+  Future<void> deleteItems(
+      String compraId) async {
+
+    final db = await databaseHelper.database;
+
+    await db.delete(
+      'compra_items',
+      where: 'compra_id = ?',
+      whereArgs: [compraId],
+    );
   }
 
   @override
@@ -90,9 +98,20 @@ class CompraRepositoryImpl implements CompraRepository {
   }
 
   @override
-  Future<List<CompraItem>> getItems(String compraId) {
-    // TODO: implement getItems
-    throw UnimplementedError();
+  Future<List<CompraItem>> getItems(
+      String compraId) async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'compra_items',
+      where: 'compra_id = ?',
+      whereArgs: [compraId],
+    );
+
+    return result
+        .map((e) => CompraItem.fromMap(e))
+        .toList();
   }
 
   @override
@@ -121,9 +140,23 @@ class CompraRepositoryImpl implements CompraRepository {
   }
 
   @override
-  Future<void> insertItems(List<CompraItem> items) {
-    // TODO: implement insertItems
-    throw UnimplementedError();
+  Future<void> insertItems(
+      List<CompraItem> items) async {
+
+    final db = await databaseHelper.database;
+
+    final batch = db.batch();
+
+    for (final item in items) {
+      batch.insert(
+        'compra_items',
+        item.toMap(),
+      );
+    }
+
+    await batch.commit(
+      noResult: true,
+    );
   }
 
   @override
@@ -205,6 +238,197 @@ class CompraRepositoryImpl implements CompraRepository {
       },
       where: 'id = ?',
       whereArgs: [compraId],
+    );
+  }
+
+  @override
+  Future<void> asociarCompra(
+      String solicitudId,
+      String compraId) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'solicitudes_compra',
+      {
+        'compra_id': compraId,
+        'estado': EstadoSolicitud.aprobada.index,
+      },
+      where: 'id = ?',
+      whereArgs: [solicitudId],
+    );
+  }
+
+  @override
+  Future<void> deleteSolicitud(
+      String id) async {
+
+    final db = await databaseHelper.database;
+
+    await db.delete(
+      'solicitudes_compra',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  @override
+  Future<SolicitudCompra?>
+  getSolicitudById(String id) async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'solicitudes_compra',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return SolicitudCompra.fromMap(
+      result.first,
+    );
+  }
+
+  @override
+  Future<List<SolicitudCompra>>
+  getSolicitudes() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'solicitudes_compra',
+      orderBy: 'fecha_solicitud DESC',
+    );
+
+    return result
+        .map(
+          (e) => SolicitudCompra.fromMap(e),
+    )
+        .toList();
+  }
+
+  @override
+  Future<List<SolicitudCompra>>
+  getSolicitudesPendientes() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'solicitudes_compra',
+      where: 'estado = ?',
+      whereArgs: [
+        EstadoSolicitud.pendiente.index
+      ],
+      orderBy: 'fecha_solicitud',
+    );
+
+    return result
+        .map(
+          (e) => SolicitudCompra.fromMap(e),
+    )
+        .toList();
+  }
+
+  @override
+  Future<List<SolicitudCompra>>
+  getSolicitudesPendientesSincronizacion() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'solicitudes_compra',
+      where: 'sync_status = ?',
+      whereArgs: [0],
+      orderBy: 'fecha_solicitud DESC',
+    );
+
+    return result
+        .map((e) => SolicitudCompra.fromMap(e))
+        .toList();
+  }
+
+  @override
+  Future<List<Compra>> getVigentes() async {
+
+    final db = await databaseHelper.database;
+
+    final result = await db.query(
+      'compras',
+      where: 'liberada = ?',
+      whereArgs: [0],
+      orderBy: 'fecha_solicitud DESC',
+    );
+
+    return Future.wait(
+      result.map((e) => _mapCompra(db, e)),
+    );
+  }
+
+  @override
+  Future<void> insertSolicitud(
+      SolicitudCompra solicitud) async {
+
+    final db = await databaseHelper.database;
+
+    await db.insert(
+      'solicitudes_compra',
+      solicitud.toMap(),
+    );
+  }
+
+  @override
+  Future<void> marcarSolicitudSincronizada(
+      String solicitudId) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'solicitudes_compra',
+      {
+        'sync_status': 1,
+      },
+      where: 'id = ?',
+      whereArgs: [solicitudId],
+    );
+  }
+
+  @override
+  Future<void> updateEstadoSolicitud(
+      String solicitudId,
+      EstadoSolicitud estado, {
+        String? motivoRechazo,
+        String? compradorId,
+      }) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'solicitudes_compra',
+      {
+        'estado': estado.index,
+        'motivo_rechazo': motivoRechazo,
+        'comprador_id': compradorId,
+      },
+      where: 'id = ?',
+      whereArgs: [solicitudId],
+    );
+  }
+  @override
+  Future<void> updateSolicitud(
+      SolicitudCompra solicitud) async {
+
+    final db = await databaseHelper.database;
+
+    await db.update(
+      'solicitudes_compra',
+      solicitud.toMap(),
+      where: 'id = ?',
+      whereArgs: [solicitud.id],
     );
   }
 }

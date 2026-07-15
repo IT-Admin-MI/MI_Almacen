@@ -130,6 +130,8 @@ class LiberacionValesViewModel extends ChangeNotifier {
       );
 
       await firebaseService.actualizarLiberacionVale(
+
+
         id: valeId,
         liberado: liberado,
         comentario: comentario,

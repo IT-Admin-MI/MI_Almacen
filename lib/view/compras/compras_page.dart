@@ -48,7 +48,7 @@ class _ComprasPageState extends State<ComprasPage> {
     );
 
     final descripcionController = TextEditingController(
-      text: compraExistente?.descripcion ?? "",
+      text: compraExistente?.comentario ?? "",
     );
 
     final ordenCompraController = TextEditingController(
@@ -1120,7 +1120,7 @@ class _ComprasPageState extends State<ComprasPage> {
                         final compra = Compra(
                           id: id,
                           nombre: nombreController.text.trim(),
-                          descripcion:
+                          comentario:
                           descripcionController.text.trim(),
                           ordenCompra:
                           ordenCompraController.text.trim(),
@@ -1135,7 +1135,13 @@ class _ComprasPageState extends State<ComprasPage> {
                                 (item) => item.copyWith(compraId: id),
                           )
                               .toList(),
-                          sync_status: 0,
+                          syncStatus: 0,
+                          solicitudId: '',
+                          tipoCompra: TipoCompra.proyecto,
+                          compradorId: '',
+                          requiereRevisionSolicitante: false,
+                          revisionSolicitanteRealizada: false,
+                          liberada: false,
                         );
 
                         if (esEdicion) {

@@ -88,11 +88,21 @@ const String createComprasTable = '''
 CREATE TABLE compras(
     id TEXT PRIMARY KEY,
     nombre TEXT NOT NULL,
-    descripcion TEXT,
+    comentario TEXT,
+    solicitud_id TEXT NOT NULL,
     orden_compra TEXT NOT NULL,
+    tipo_compra INTEGER NOT NULL,
+    comprador_id TEXT NOT NULL,
     fecha_solicitud TEXT NOT NULL,
     fecha_entrega TEXT,
     estado INTEGER NOT NULL,
+    requiere_revision_solicitante INTEGER NOT NULL,
+    revision_solicitante_realizada INTEGER NOT NULL,
+    fecha_revision_solicitante TEXT,
+    usuario_revision_id TEXT,
+    liberada INTEGER NOT NULL,
+    fecha_liberacion TEXT,
+    almacenista_id TEXT,
     estatus INTEGER NOT NULL,
     sync_status INTEGER NOT NULL
 );
@@ -106,7 +116,24 @@ CREATE TABLE compra_items(
     nombre TEXT NOT NULL,
     proyecto_clave TEXT,
     cantidad REAL NOT NULL,
-    unidad TEXT NOT NULL
+    unidad TEXT NOT NULL,
+    observaciones TEXT,
+    numero_parte TEXT
+);
+''';
+
+const String createSolicitudesCompraTable = '''
+CREATE TABLE solicitudes_compra(
+    id TEXT PRIMARY KEY,
+    solicitante_id TEXT NOT NULL,
+    fecha_solicitud TEXT NOT NULL,
+    descripcion TEXT NOT NULL,
+    requiere_revision_solicitante INTEGER NOT NULL,
+    estado INTEGER NOT NULL,
+    motivo_rechazo TEXT,
+    comprador_id TEXT,
+    compra_id TEXT,
+    sync_status INTEGER
 );
 ''';
 
@@ -115,10 +142,32 @@ CREATE TABLE historial_compras(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     compra_id TEXT NOT NULL,
     fecha TEXT NOT NULL,
+    usuario_id TEXT,
     usuario_nombre TEXT NOT NULL,
     accion TEXT NOT NULL,
     estado_anterior INTEGER,
     estado_nuevo INTEGER,
     comentario TEXT
+);
+''';
+
+const String createHerramientasPrestamoTable = '''
+CREATE TABLE herramientas_prestamo(
+    id TEXT PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    codigo TEXT,
+    comentario TEXT,
+    imagen_path TEXT,
+    imagen_url TEXT,
+    usuario_id TEXT NOT NULL,
+    usuario_nombre TEXT NOT NULL,
+    entregado_por_id TEXT NOT NULL,
+    entregado_por_nombre TEXT NOT NULL,
+    recibido_por_id TEXT,
+    recibido_por_nombre TEXT,
+    estado INTEGER NOT NULL,
+    fecha_prestamo TEXT NOT NULL,
+    fecha_devolucion TEXT,
+    sync_status INTEGER NOT NULL
 );
 ''';

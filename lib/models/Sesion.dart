@@ -1,6 +1,6 @@
 class SesionUsuario {
 
-  final String? usuarioId;
+  final String usuarioId;
 
   final String nombre;
 
@@ -9,7 +9,7 @@ class SesionUsuario {
   final departamento;
 
   SesionUsuario({
-    this.usuarioId,
+    required this.usuarioId,
     required this.nombre,
     required this.rol,
     required this.departamento,

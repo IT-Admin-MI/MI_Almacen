@@ -54,11 +54,10 @@ class AuthServiceImpl implements AuthService {
 
         await usuarioRepository.update(
           Usuario(
-            id: usuarioLocal.id,
+            id: usuarioFirebase.id,
             nombre: usuarioFirebase.nombre,
             password: usuarioFirebase.password,
-            descripcion:
-            usuarioFirebase.descripcion,
+            descripcion: usuarioFirebase.descripcion,
             rol: usuarioFirebase.rol,
             fcmToken: usuarioFirebase.fcmToken,
             supervisorId: usuarioFirebase.supervisorId,
@@ -71,7 +70,7 @@ class AuthServiceImpl implements AuthService {
     final sesion = SesionUsuario(
       nombre: usuarioFirebase.nombre,
       rol: usuarioFirebase.rol,
-      usuarioId: usuarioFirebase.id ?? '',
+      usuarioId: usuarioFirebase.id!,
       departamento: usuarioFirebase.departamento,
     );
 
@@ -121,11 +120,6 @@ class AuthServiceImpl implements AuthService {
 
     final prefs =
     await SharedPreferences.getInstance();
-
-
-
-
-
     final json =
     prefs.getString(
       sessionKey,

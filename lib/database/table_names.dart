@@ -12,4 +12,7 @@ class TableNames {
   static const historialCompras = 'historial_compras';
 
   static const appConfig = 'app_config';
+
+  static const solicitudesCompra='solicitudes_compra';
+  static const herramientasPrestamo = 'herramientas_prestamo';
 }

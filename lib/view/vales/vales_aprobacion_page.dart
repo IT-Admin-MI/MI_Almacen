@@ -118,6 +118,7 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
                 mensaje: 'Actualizando vales...',
               );
 
+
               try {
                 await widget.viewModel.actualizar();
 

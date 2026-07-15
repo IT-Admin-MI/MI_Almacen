@@ -4,6 +4,8 @@ import 'package:mi_almacen/models/CompraItem.dart';
 import 'package:mi_almacen/models/Material.dart';
 import 'package:mi_almacen/models/Vale.dart';
 import 'package:mi_almacen/models/Vale_Item.dart';
+import 'package:mi_almacen/models/compra_solicitud.dart';
+import 'package:mi_almacen/models/herramienta_prestamo.dart';
 
 import '../models/Proyecto.dart';
 import '../models/Usuario.dart';
@@ -520,8 +522,8 @@ class FirebaseServiceImpl implements FirebaseService {
           nombre:
           data['nombre'] ?? '',
 
-          descripcion:
-          data['descripcion'],
+          comentario:
+          data['comentario'],
 
           ordenCompra:
           data['orden_compra'] ?? '',
@@ -546,7 +548,14 @@ class FirebaseServiceImpl implements FirebaseService {
           data['estatus'] ?? 0,
 
           items: items,
-          sync_status: data['sync_status']??0,
+          syncStatus: data['sync_status']??0,
+          solicitudId: '',
+
+          tipoCompra: data['tipo_compra'],
+          compradorId: '',
+          requiereRevisionSolicitante: false,
+          revisionSolicitanteRealizada: false,
+          liberada: false,
         ),
       );
     }
@@ -554,4 +563,56 @@ class FirebaseServiceImpl implements FirebaseService {
     return compras;
   }
 
+  @override
+  Future<void> guardarSolicitudCompra(
+      SolicitudCompra solicitud) async {
+
+    await firestore
+        .collection('solicitudes_compra')
+        .doc(solicitud.id)
+        .set(
+      solicitud.toMap(),
+      SetOptions(
+        merge: true,
+      ),
+    );
+  }
+
+  @override
+  Future<List<SolicitudCompra>>
+  obtenerSolicitudesCompra() async {
+
+    final snapshot = await firestore
+        .collection('solicitudes_compra')
+        .orderBy(
+      'fecha_solicitud',
+      descending: true,
+    )
+        .get();
+
+    return snapshot.docs
+        .map(
+          (doc) => SolicitudCompra.fromMap(
+        doc.data(),
+      ),
+    )
+        .toList();
+  }
+
+  @override
+  Future<void> guardarHerramienta(HerramientaPrestamo herramienta) async {
+    await firestore
+        .collection('herramientas_prestamo')
+        .doc(herramienta.id)
+        .set(herramienta.toMap(), SetOptions(merge: true));
+  }
+
+  @override
+  Future<List<HerramientaPrestamo>> obtenerHerramientas() async {
+    final snapshot = await firestore.collection('herramientas_prestamo').get();
+
+    return snapshot.docs
+        .map((doc) => HerramientaPrestamo.fromFirebase(doc.data()))
+        .toList();
+  }
 }

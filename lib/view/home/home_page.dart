@@ -2,16 +2,23 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/constants/roles.dart';
+import 'package:mi_almacen/repositories/compra_repository.dart';
+import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/view/admin/admin_db_page.dart';
 import 'package:mi_almacen/view/compras/compras_page.dart';
+import 'package:mi_almacen/view/compras/compras_seguimiento_page.dart';
+import 'package:mi_almacen/view/herramientas/herramientas_page.dart';
 import 'package:mi_almacen/view/vales/historial_vales_page.dart';
 import 'package:mi_almacen/view/vales/liberacionValesPage.dart';
 import 'package:mi_almacen/view/vales/vales_page.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/seguimiento_compras_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/vale_viewmodel.dart';
 import '../../viewmodels/home_viewmodel.dart';
 
@@ -25,6 +32,8 @@ import '../../services/auth_service.dart';
 class HomePage extends StatefulWidget {
 
   final AuthService authService;
+
+  final CompraSyncService compraSyncService;
 
   final ProyectoRepository proyectoRepository;
 
@@ -42,6 +51,11 @@ class HomePage extends StatefulWidget {
 
   final AdminDbViewModel adminDbViewModel;
 
+  final CompraRepository compraRepository;
+
+  final HerramientasViewModel herramientasViewModel;
+
+  final CompraSolicitudSyncService compraSolicitudSyncService;
   const HomePage({
     super.key,
     required this.authService,
@@ -53,6 +67,10 @@ class HomePage extends StatefulWidget {
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
     required this.compraViewModel,
+    required this.compraRepository,
+    required this.compraSyncService,
+    required this.compraSolicitudSyncService,
+    required this.herramientasViewModel,
   });
 
   @override
@@ -752,6 +770,26 @@ class _HomePageState
                         },
                       ),
 
+                    // Solo Administrador y Almacén (mismo criterio que Entrega de Vales)
+                    if (usuario != null && (usuario?.rol == Roles.administrador || usuario?.rol == Roles.almacen))
+                      ListTile(
+                        leading: const Icon(Icons.build),
+                        title: const Text('Herramientas prestadas'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => HerramientasPage(
+                                viewModel: widget.herramientasViewModel,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
+
+
                     // Solo Administrador
                     if (usuario != null && usuario?.rol == Roles.administrador)
                       ListTile(
@@ -769,6 +807,33 @@ class _HomePageState
                           );
                         },
                       ),
+
+                    if (usuario != null &&
+                        (usuario!.rol == Roles.administrador ||
+                            usuario?.rol == Roles.supervisor ||
+                            usuario?.rol == Roles.compras ||
+                            usuario?.rol == Roles.almacen))
+                      ListTile(
+                        leading: const Icon(Icons.shopping_bag),
+                        title: const Text('Seguimiento de Compras'),
+                        onTap: () {
+                          Navigator.pop(context);
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SeguimientoComprasPage(
+                                viewModel: SeguimientoComprasViewModel(
+                                  compraRepository: widget.compraRepository,
+                                  authService: widget.authService,
+                                  compraSolicitudSyncService: widget.compraSolicitudSyncService,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+
                     if (usuario != null && usuario?.rol == Roles.compras)
                     ListTile(
                       leading: const Icon(Icons.add_shopping_cart),

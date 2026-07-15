@@ -68,11 +68,18 @@ class DatabaseHelper {
 
     await db.execute(createComprasTable);
     await db.execute(createCompraItemsTable);
+    await db.execute(createSolicitudesCompraTable);
     await db.execute(createHistorialComprasTable);
 
     await db.execute(createComprasFechaSolicitudIndex);
     await db.execute(createComprasEstadoIndex);
     await db.execute(createCompraItemsCompraIdIndex);
+    await db.execute(createSolicitudesCompraIdIndex);
 
+
+    await db.execute(createHerramientasPrestamoTable);
+    await db.execute(createHerramientasEstadoIndex);
+    await db.execute(createHerramientasUsuarioIndex);
+    await db.execute(createHerramientasSyncIndex);
   }
 }

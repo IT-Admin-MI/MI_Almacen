@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mi_almacen/repositories/admin_repository.dart';
+import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository_impl.dart';
+import 'package:mi_almacen/repositories/herramienta_repository_impl.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
+import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
+import 'package:mi_almacen/services/compra_solicitud_sync_service_impl.dart';
 import 'package:mi_almacen/services/compra_sync_Service_impl.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/services/drive_service_impl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:mi_almacen/services/herramienta_service_impl.dart';
+import 'package:mi_almacen/services/herramienta_sync_service_impl.dart';
+import 'package:mi_almacen/services/image_storage_service_impl.dart';
 import 'package:mi_almacen/services/notification_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
@@ -13,6 +21,7 @@ import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 
@@ -61,6 +70,7 @@ Future<void> main() async {
   // CORE (una sola vez, antes de runApp)
   // ==========================
 
+  final imageStorageService = ImageStorageServiceImpl();
   final databaseHelper = DatabaseHelper.instance;
   final firebaseService = FirebaseServiceImpl();
 
@@ -84,9 +94,7 @@ Future<void> main() async {
     databaseHelper: databaseHelper,
   );
 
-  final compraRepository = CompraRepositoryImpl(
-    databaseHelper: databaseHelper,
-  );
+  final compraRepository = CompraRepositoryImpl(databaseHelper: databaseHelper);
 
   final historialValeRepository = HistorialValeRepositoryImpl(
     databaseHelper: databaseHelper,
@@ -97,6 +105,31 @@ Future<void> main() async {
   final authService = AuthServiceImpl(
     firebaseService: firebaseService,
     usuarioRepository: usuarioRepository,
+  );
+
+  final compraRepositoy = CompraRepositoryImpl(databaseHelper: databaseHelper);
+
+
+  final herramientaRepository = HerramientaRepositoryImpl(
+    databaseHelper: databaseHelper,
+  );
+
+  final herramientaSyncService = HerramientaSyncServiceImpl(
+    firebaseService: firebaseService,
+    herramientaRepository: herramientaRepository,
+    imageStorageService: imageStorageService,
+  );
+
+  final herramientaService = HerramientaServiceImpl(
+    herramientaRepository: herramientaRepository,
+    herramientaSyncService: herramientaSyncService,
+  );
+
+  final herramientasViewModel = HerramientasViewModel(
+    herramientaService: herramientaService,
+    herramientaSyncService: herramientaSyncService,
+    usuarioRepository: usuarioRepository, // ya existe en main.dart
+    authService: authService,             // ya existe en main.dart
   );
 
 // NUEVO — justo aquí:
@@ -119,6 +152,12 @@ Future<void> main() async {
   );
 
   final compraSyncService = CompraSyncServiceImpl(
+    firebaseService: firebaseService,
+    compraRepository: compraRepository,
+  );
+
+  final compraSolicitudSyncService =
+  CompraSolicitudSyncServiceImpl(
     firebaseService: firebaseService,
     compraRepository: compraRepository,
   );
@@ -206,6 +245,11 @@ Future<void> main() async {
       compraViewModel: compraViewModel,
       loginViewModel: loginViewModel,
       syncService: syncService,
+      compraRepository:compraRepositoy,
+      compraSyncService: compraSyncService,
+      compraSolicitudSyncService: compraSolicitudSyncService,
+      herramientasViewModel: herramientasViewModel,
+
     ),
   );
 }
@@ -222,6 +266,10 @@ class MyApp extends StatelessWidget {
   final CompraViewModel compraViewModel;
   final LoginViewModel loginViewModel;
   final SyncService syncService;
+  final CompraRepositoryImpl compraRepository;
+  final CompraSyncService compraSyncService;
+  final CompraSolicitudSyncService compraSolicitudSyncService;
+  final HerramientasViewModel herramientasViewModel;
 
   const MyApp({
     super.key,
@@ -236,6 +284,10 @@ class MyApp extends StatelessWidget {
     required this.compraViewModel,
     required this.loginViewModel,
     required this.syncService,
+    required this.compraRepository,
+    required this.compraSyncService,
+    required this.compraSolicitudSyncService,
+    required this.herramientasViewModel,
   });
 
   @override
@@ -255,6 +307,10 @@ class MyApp extends StatelessWidget {
         liberacionValesViewModel: liberacionValesViewModel,
         adminDbViewModel: adminDbViewModel,
         compraViewModel: compraViewModel,
+        compraRepository: compraRepository,
+        compraSyncService: compraSyncService,
+        compraSolicitudSyncService: compraSolicitudSyncService,
+        herramientasViewModel: herramientasViewModel,
       ),
 
       routes: {
@@ -269,6 +325,10 @@ class MyApp extends StatelessWidget {
           liberacionValesViewModel: liberacionValesViewModel,
           adminDbViewModel: adminDbViewModel,
           compraViewModel: compraViewModel,
+          compraRepository: compraRepository,
+          compraSyncService: compraSyncService,
+          compraSolicitudSyncService: compraSolicitudSyncService,
+          herramientasViewModel: herramientasViewModel,
         ),
       },
     );

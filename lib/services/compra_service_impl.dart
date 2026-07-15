@@ -60,15 +60,4 @@ class CompraServiceImpl implements CompraService {
     );
 
   }
-  Future<void> _sincronizarBestEffort(String compraId) async {
-    try {
-      final compra = await compraRepository.getById(compraId);
-      if (compra != null) {
-        await compraSyncService.sincronizarCompra(compra);
-      }
-    } catch (e) {
-      print('SYNC INMEDIATO DE COMPRA FALLÓ (se reintentará después): $e');
-    }
-  }
-
 }

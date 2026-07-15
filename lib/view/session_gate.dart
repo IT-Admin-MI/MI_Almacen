@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/login_viewmodel.dart';
@@ -24,6 +28,10 @@ class SessionGate extends StatefulWidget {
   final LiberacionValesViewModel liberacionValesViewModel;
   final AdminDbViewModel adminDbViewModel;
   final CompraViewModel compraViewModel;
+  final CompraRepository compraRepository;
+  final CompraSyncService compraSyncService;
+  final CompraSolicitudSyncService compraSolicitudSyncService;
+  final HerramientasViewModel herramientasViewModel;
 
   const SessionGate({
     super.key,
@@ -37,6 +45,10 @@ class SessionGate extends StatefulWidget {
     required this.liberacionValesViewModel,
     required this.adminDbViewModel,
     required this.compraViewModel,
+    required this.compraRepository,
+    required this.compraSyncService,
+    required this.compraSolicitudSyncService,
+    required this.herramientasViewModel,
   });
 
   @override
@@ -91,6 +103,10 @@ class _SessionGateState extends State<SessionGate> {
         liberacionValesViewModel: widget.liberacionValesViewModel,
         adminDbViewModel: widget.adminDbViewModel,
         compraViewModel: widget.compraViewModel,
+        compraRepository: widget.compraRepository,
+        compraSyncService: widget.compraSyncService,
+        compraSolicitudSyncService: widget.compraSolicitudSyncService,
+        herramientasViewModel: widget.herramientasViewModel,
       );
     }
 

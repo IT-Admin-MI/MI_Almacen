@@ -1,5 +1,7 @@
 import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/models/Vale.dart';
+import 'package:mi_almacen/models/compra_solicitud.dart';
+import 'package:mi_almacen/models/herramienta_prestamo.dart';
 
 import '../models/Proyecto.dart';
 import '../models/Usuario.dart';
@@ -34,4 +36,13 @@ abstract class FirebaseService {
 
   Future<List<Compra>> obtenerCompras();
 
+  Future<void> guardarSolicitudCompra(
+      SolicitudCompra solicitud,
+      );
+
+  Future<List<SolicitudCompra>>
+  obtenerSolicitudesCompra();
+
+  Future<void> guardarHerramienta(HerramientaPrestamo herramienta);
+  Future<List<HerramientaPrestamo>> obtenerHerramientas();
 }
