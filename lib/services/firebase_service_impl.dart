@@ -465,99 +465,21 @@ class FirebaseServiceImpl implements FirebaseService {
 
   @override
   Future<List<Compra>> obtenerCompras() async {
-    final snapshot =
-        await firestore.collection('compras').get();
-
+    final snapshot = await firestore.collection('compras').get();
     final compras = <Compra>[];
 
     for (final doc in snapshot.docs) {
-
       final data = doc.data();
 
-      final itemsSnapshot =
-          await doc.reference
-          .collection('items')
-          .get();
+      final itemsSnapshot = await doc.reference.collection('items').get();
+      final items = itemsSnapshot.docs
+          .map((itemDoc) => CompraItem.fromMap({
+        'id': itemDoc.id,
+        ...itemDoc.data(),
+      }))
+          .toList();
 
-      final items = <CompraItem>[];
-
-      for (final itemDoc in itemsSnapshot.docs) {
-
-        final item = itemDoc.data();
-
-        items.add(
-
-          CompraItem(
-
-            id: itemDoc.id,
-
-            compraId:
-            item['compra_id'] ?? '',
-
-            materialClave:
-            item['material_clave'],
-
-            nombre:
-            item['nombre'] ?? '',
-
-            proyectoClave:
-            item['proyecto_clave'],
-
-            cantidad:
-            (item['cantidad'] as num).toDouble(),
-
-            unidad:
-            item['unidad'] ?? '',
-          ),
-        );
-      }
-
-      compras.add(
-
-        Compra(
-
-          id:
-          data['id'],
-
-          nombre:
-          data['nombre'] ?? '',
-
-          comentario:
-          data['comentario'],
-
-          ordenCompra:
-          data['orden_compra'] ?? '',
-
-          fechaSolicitud:
-          DateTime.parse(
-            data['fecha_solicitud'],
-          ),
-
-          fechaEntrega:
-          data['fecha_entrega'] != null
-              ? DateTime.parse(
-            data['fecha_entrega'],
-          )
-              : null,
-
-          estado:
-          EstadoCompra.values[
-          data['estado']],
-
-          estatus:
-          data['estatus'] ?? 0,
-
-          items: items,
-          syncStatus: data['sync_status']??0,
-          solicitudId: '',
-
-          tipoCompra: data['tipo_compra'],
-          compradorId: '',
-          requiereRevisionSolicitante: false,
-          revisionSolicitanteRealizada: false,
-          liberada: false,
-        ),
-      );
+      compras.add(Compra.fromMap(data, items: items));
     }
 
     return compras;
@@ -622,13 +544,15 @@ class FirebaseServiceImpl implements FirebaseService {
 
     print('USUARIOS FIREBASE: ${snapshot.docs.length}');
 
-    for (final doc in snapshot.docs) {
-      print(doc.data());
-    }
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      print(data);
 
-    return snapshot.docs
-        .map((d) => Usuario.fromMap(d.data()))
-        .toList();
+      return Usuario.fromMap({
+        ...data,
+        'id': doc.id, // aseguramos que el id sea el del documento Firestore
+      });
+    }).toList();
   }
 
 }

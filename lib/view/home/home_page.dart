@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/constants/roles.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
+import 'package:mi_almacen/repositories/usuario_repository.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/view/admin/admin_db_page.dart';
@@ -55,7 +56,10 @@ class HomePage extends StatefulWidget {
 
   final HerramientasViewModel herramientasViewModel;
 
+
   final CompraSolicitudSyncService compraSolicitudSyncService;
+
+  final UsuarioRepository usuarioRepository;
   const HomePage({
     super.key,
     required this.authService,
@@ -71,6 +75,7 @@ class HomePage extends StatefulWidget {
     required this.compraSyncService,
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
+    required this.usuarioRepository,
   });
 
   @override
@@ -718,6 +723,7 @@ class _HomePageState
                       },
                     ),
 
+
                     ListTile(
                       leading: const Icon(Icons.history),
                       title: const Text('Historial de Vales'),
@@ -734,8 +740,10 @@ class _HomePageState
                       },
                     ),
 
+                    const Divider(),
+
                     // Solo Administrador y Compras
-                    if (usuario != null && (usuario!.rol == 0 || usuario?.rol == 1))
+                    if (usuario != null && (usuario?.rol == 0 || usuario?.rol == 1))
                       ListTile(
                         leading: const Icon(Icons.fact_check),
                         title: const Text('Aprobación de Vales'),
@@ -787,26 +795,8 @@ class _HomePageState
                           );
                         },
                       ),
+                    const Divider(),
 
-
-
-                    // Solo Administrador
-                    if (usuario != null && usuario?.rol == Roles.administrador)
-                      ListTile(
-                        leading: const Icon(Icons.admin_panel_settings),
-                        title: const Text('Administrar base de datos'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AdminDbPage(
-                                viewModel: widget.adminDbViewModel,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
 
                     if (usuario != null &&
                         (usuario!.rol == Roles.administrador ||
@@ -827,6 +817,8 @@ class _HomePageState
                                   compraRepository: widget.compraRepository,
                                   authService: widget.authService,
                                   compraSolicitudSyncService: widget.compraSolicitudSyncService,
+                                  compraSyncService: widget.compraSyncService,
+                                  usuarioRepository: widget.usuarioRepository,
                                 ),
                               ),
                             ),
@@ -834,7 +826,7 @@ class _HomePageState
                         },
                       ),
 
-                    if (usuario != null && usuario?.rol == Roles.compras)
+                    if (usuario != null && (usuario?.rol == Roles.compras || usuario?.rol == Roles.administrador))
                     ListTile(
                       leading: const Icon(Icons.add_shopping_cart),
                       title: const Text('Nueva Compra'),
@@ -845,12 +837,31 @@ class _HomePageState
                           MaterialPageRoute(
                             builder: (_) => ComprasPage(
                               viewModel: widget.compraViewModel,
+                              usuarioId: '',
                             ),
                           ),
                         );
                       },
                     ),
 
+                    const Divider(),
+                    // Solo Administrador
+                    if (usuario != null && usuario?.rol == Roles.administrador)
+                      ListTile(
+                        leading: const Icon(Icons.admin_panel_settings),
+                        title: const Text('Administrar base de datos'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AdminDbPage(
+                                viewModel: widget.adminDbViewModel,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     const Divider(),
 
                     ListTile(

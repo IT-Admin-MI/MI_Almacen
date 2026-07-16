@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/viewmodels/seguimiento_compras_viewmodel.dart';
+import 'package:mi_almacen/widgets/compra_timeline_card.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 class SeguimientoComprasPage extends StatefulWidget {
-
   final SeguimientoComprasViewModel viewModel;
 
   const SeguimientoComprasPage({
@@ -15,76 +16,46 @@ class SeguimientoComprasPage extends StatefulWidget {
       _SeguimientoComprasPageState();
 }
 
-class _SeguimientoComprasPageState
-    extends State<SeguimientoComprasPage> {
-
+class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
   @override
   void initState() {
     super.initState();
-
     widget.viewModel.addListener(_refresh);
-
     widget.viewModel.cargar();
   }
 
   @override
   void dispose() {
-
     widget.viewModel.removeListener(_refresh);
-
     super.dispose();
   }
 
   void _refresh() {
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-
     return DefaultTabController(
-
       length: 2,
-
       child: Scaffold(
-
         appBar: AppBar(
-
-          title: const Text(
-            'Seguimiento de Compras',
-          ),
-
+          title: const Text('Seguimiento de Compras'),
           bottom: const TabBar(
-
             tabs: [
-
-              Tab(
-                text: "Estado de compras",
-              ),
-
-              Tab(
-                text: "Solicitudes",
-              ),
-
+              Tab(text: "Estado de compras"),
+              Tab(text: "Solicitudes"),
             ],
           ),
         ),
-
-        floatingActionButton:
-        FloatingActionButton(
+        floatingActionButton: FloatingActionButton(
           onPressed: _mostrarDialogoSolicitud,
           child: const Icon(Icons.add),
         ),
         body: TabBarView(
-
           children: [
-
             _estadoCompras(),
-
             _solicitudes(),
-
           ],
         ),
       ),
@@ -92,240 +63,199 @@ class _SeguimientoComprasPageState
   }
 
   Widget _estadoCompras() {
+    final vm = widget.viewModel;
 
-    if (widget.viewModel.cargando) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+    // Solo mostramos el spinner de pantalla completa cuando de verdad
+    // no hay nada que mostrar todavía (primera carga en frío).
+    if (vm.cargando && vm.compras.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (widget.viewModel.compras.isEmpty) {
-      return const Center(
-        child: Text(
-          "No hay compras vigentes",
+    if (vm.solicitudes.isEmpty) {
+      return _envolverConSync(
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/logo_bn.png',
+                  width: 100,
+                  color: Colors.grey.withOpacity(0.4),
+                  colorBlendMode: BlendMode.modulate,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Sin compras',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
+    return _envolverConSync(
+      ListView.builder(
+        itemCount: vm.compras.length,
+        itemBuilder: (_, index) {
+          final compra = vm.compras[index];
 
-    return ListView.builder(
+          return CompraTimelineCard(
+            key: ValueKey(compra.id),
+            compra: compra,
+            expandido: vm.estaExpandido(compra.id!),
+            esUsuarioCompras: vm.esUsuarioCompras,
+            onToggle: () => vm.toggleExpandido(compra.id!),
+            onAvanzar: () => vm.avanzarEstado(compra),
+          );
+        },
+      ),
+    );
+  }
 
-      itemCount:
-      widget.viewModel.compras.length,
+  /// Envuelve el contenido con un gesto de swipe (en el primer elemento
+  /// invisible arriba) para disparar la sincronización manual con Firebase.
+  Widget _envolverConSync(Widget child) {
+    final vm = widget.viewModel;
 
-      itemBuilder: (_, index) {
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async {
+            final exito = await vm.sincronizar();
 
-        final compra =
-        widget.viewModel.compras[index];
-
-        return ExpansionTile(
-
-          title: Text(
-            compra.nombre,
+            if (mounted) {
+              StatusOverlay.mostrar(
+                context,
+                exito: exito,
+                mensaje: exito
+                    ? 'Sincronización completada'
+                    : 'Error al sincronizar',
+                duracion: const Duration(seconds: 2),
+              );
+            }
+          },
+          child: child is ListView
+              ? child
+              : ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.7,
+                child: child,
+              ),
+            ],
           ),
+        ),
 
-          subtitle: Text(
-            compra.ordenCompra,
-          ),
-
-          children: const [
-
-            ListTile(
-              leading: Icon(Icons.check_circle),
-              title: Text("Aprobada"),
-            ),
-
-            ListTile(
-              leading: Icon(Icons.check_circle),
-              title: Text(
-                "Orden de compra creada",
-              ),
-            ),
-
-            ListTile(
-              leading: Icon(Icons.check_circle),
-              title: Text(
-                "Orden autorizada",
-              ),
-            ),
-
-            ListTile(
-              leading: Icon(Icons.check_circle),
-              title: Text("Pagada"),
-            ),
-
-            ListTile(
-              leading: Icon(Icons.check_circle),
-              title: Text(
-                "Producto enviado",
-              ),
-            ),
-
-          ],
-        );
-      },
+      ],
     );
   }
 
   Widget _solicitudes() {
+    final vm = widget.viewModel;
 
-    if (widget.viewModel.cargando) {
-      return const Center(
-        child: CircularProgressIndicator(),
+    if (vm.cargando && vm.solicitudes.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (vm.solicitudes.isEmpty) {
+      return _envolverConSync(
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/logo_bn.png',
+                  width: 100,
+                  color: Colors.grey.withOpacity(0.4),
+                  colorBlendMode: BlendMode.modulate,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Sin solicitudes',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
 
-    return ListView.builder(
+    return _envolverConSync(
+      ListView.builder(
+        itemCount: vm.solicitudes.length,
+        itemBuilder: (_, index) {
+          final solicitud = vm.solicitudes[index];
 
-      itemCount:
-      widget.viewModel.solicitudes.length,
-
-      itemBuilder: (_, index) {
-
-        final solicitud =
-        widget.viewModel.solicitudes[index];
-
-        return Card(
-
-          margin: const EdgeInsets.all(8),
-
-          child: ListTile(
-
-            title: Text(
-              solicitud.descripcion,
+          return Card(
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(solicitud.descripcion),
+              subtitle: Text(
+                'Solicitante: ${vm.nombreSolicitante(solicitud.solicitanteId)}\n'
+                    '${solicitud.estado.name}',
+              ),
+              isThreeLine: true,
             ),
-
-            subtitle: Text(
-              solicitud.estado.name,
-            ),
-
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  Future<void> _mostrarDialogoSolicitud()
-  async {
-
-    final descripcionController =
-    TextEditingController();
-
+  Future<void> _mostrarDialogoSolicitud() async {
+    final descripcionController = TextEditingController();
     bool requiereRevision = false;
 
     await showDialog(
-
       context: context,
-
       builder: (_) {
-
         return StatefulBuilder(
-
           builder: (_, setState) {
-
             return AlertDialog(
-
-              title: const Text(
-                "Nueva Solicitud",
-              ),
-
+              title: const Text("Nueva Solicitud"),
               content: Column(
-
-                mainAxisSize:
-                MainAxisSize.min,
-
+                mainAxisSize: MainAxisSize.min,
                 children: [
-
                   TextField(
-
-                    controller:
-                    descripcionController,
-
-                    decoration:
-                    const InputDecoration(
-
-                      labelText:
-                      "Descripción",
-
-                    ),
+                    controller: descripcionController,
+                    decoration: const InputDecoration(labelText: "Descripción"),
                   ),
-
-                  const SizedBox(
-                    height: 16,
-                  ),
-
+                  const SizedBox(height: 16),
                   SwitchListTile(
-
-                    title: const Text(
-                      "Requiere revisión del solicitante",
-                    ),
-
-                    value:
-                    requiereRevision,
-
-                    onChanged: (v) {
-
-                      setState(() {
-
-                        requiereRevision =
-                            v;
-
-                      });
-
-                    },
-
+                    title: const Text("Requiere revisión del solicitante"),
+                    value: requiereRevision,
+                    onChanged: (v) => setState(() => requiereRevision = v),
                   ),
-
                 ],
               ),
-
               actions: [
-
                 TextButton(
-
-                  onPressed: () {
-
-                    Navigator.pop(
-                      context,
-                    );
-
-                  },
-
-                  child: const Text(
-                    "Cancelar",
-                  ),
-
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancelar"),
                 ),
-
                 FilledButton(
-
                   onPressed: () async {
-
-                    await widget.viewModel
-                        .crearSolicitud(
-
-                      descripcion:
-                      descripcionController
-                          .text,
-
-                      requiereRevision:
-                      requiereRevision,
-
+                    await widget.viewModel.crearSolicitud(
+                      descripcion: descripcionController.text,
+                      requiereRevision: requiereRevision,
                     );
-
-                    if (mounted) {
-                      Navigator.pop(
-                        context,
-                      );
-                    }
-
+                    if (mounted) Navigator.pop(context);
                   },
-
-                  child: const Text(
-                    "Crear",
-                  ),
-
+                  child: const Text("Crear"),
                 ),
-
               ],
             );
           },

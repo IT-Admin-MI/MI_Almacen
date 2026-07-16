@@ -9,4 +9,6 @@ abstract class SyncService {
   Future<void> sincronizarCompras();
 
   Future<void> sincronizarMateriales();
+
+  Future<void> sincronizarUsuarios();
 }

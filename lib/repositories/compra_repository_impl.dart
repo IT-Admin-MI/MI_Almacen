@@ -404,7 +404,6 @@ class CompraRepositoryImpl implements CompraRepository {
         String? motivoRechazo,
         String? compradorId,
       }) async {
-
     final db = await databaseHelper.database;
 
     await db.update(
@@ -413,6 +412,7 @@ class CompraRepositoryImpl implements CompraRepository {
         'estado': estado.index,
         'motivo_rechazo': motivoRechazo,
         'comprador_id': compradorId,
+        'sync_status': 0,
       },
       where: 'id = ?',
       whereArgs: [solicitudId],

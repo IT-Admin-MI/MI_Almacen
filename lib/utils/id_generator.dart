@@ -38,4 +38,22 @@ class IdGenerator {
 
     return 'SOLICITUD_${fecha}_${hora}_${nombre.replaceAll(' ', '_')}';
   }
+
+  static String generarCompraItemId() {
+    final now = DateTime.now();
+
+    final fecha =
+        '${now.year}'
+        '${now.month.toString().padLeft(2, '0')}'
+        '${now.day.toString().padLeft(2, '0')}';
+
+    final hora =
+        '${now.hour.toString().padLeft(2, '0')}'
+        '${now.minute.toString().padLeft(2, '0')}'
+        '${now.second.toString().padLeft(2, '0')}'
+        '${now.millisecond.toString().padLeft(3, '0')}'
+        '${now.microsecond.toString().padLeft(3, '0')}'; // evita colisión en agregados rápidos
+
+    return 'ITEM_${fecha}_${hora}';
+  }
 }

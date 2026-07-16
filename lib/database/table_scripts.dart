@@ -110,7 +110,7 @@ CREATE TABLE compras(
 
 const String createCompraItemsTable = '''
 CREATE TABLE compra_items(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY,
     compra_id TEXT NOT NULL,
     material_clave TEXT,
     nombre TEXT NOT NULL,

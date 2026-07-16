@@ -3,12 +3,14 @@ import 'package:mi_almacen/repositories/proyecto_repository.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/services/drive_service.dart';
 import 'package:mi_almacen/services/sync_service.dart';
+import 'package:mi_almacen/services/usuario_sync_service.dart';
 import 'package:mi_almacen/services/vate_sync_service.dart';
 
 class SyncServiceImpl implements SyncService {
 
   final ProyectoRepository proyectoRepository;
   final MaterialRepository materialRepository;
+  final UsuarioSyncService usuarioSyncService;
 
   final ValeSyncService valeSyncService;
   final CompraSyncService compraSyncService;
@@ -22,6 +24,7 @@ class SyncServiceImpl implements SyncService {
     required this.valeSyncService,
     required this.compraSyncService,
     required this.driveService,
+    required this.usuarioSyncService,
   });
 
   @override
@@ -29,6 +32,7 @@ class SyncServiceImpl implements SyncService {
     await _intentar(() => valeSyncService.sincronizarPendientes());
     await _intentar(() => compraSyncService.sincronizarPendientes());
     await _intentar(() => sincronizarProyectos());
+    await _intentar(() => sincronizarUsuarios());
     await _intentar(() => sincronizarVales());
     await _intentar(() => sincronizarCompras());
     await _intentar(() => sincronizarMateriales());
@@ -70,6 +74,11 @@ class SyncServiceImpl implements SyncService {
 
     await compraSyncService.descargarCompras();
 
+  }
+
+  @override
+  Future<void> sincronizarUsuarios() async {
+    await usuarioSyncService.descargarUsuarios();
   }
 
 }

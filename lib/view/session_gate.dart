@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
+import 'package:mi_almacen/repositories/usuario_repository.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
@@ -33,6 +34,7 @@ class SessionGate extends StatefulWidget {
   final CompraSolicitudSyncService compraSolicitudSyncService;
   final HerramientasViewModel herramientasViewModel;
 
+  final UsuarioRepository usuarioRepository;
   const SessionGate({
     super.key,
     required this.authService,
@@ -49,6 +51,7 @@ class SessionGate extends StatefulWidget {
     required this.compraSyncService,
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
+    required this.usuarioRepository,
   });
 
   @override
@@ -107,6 +110,7 @@ class _SessionGateState extends State<SessionGate> {
         compraSyncService: widget.compraSyncService,
         compraSolicitudSyncService: widget.compraSolicitudSyncService,
         herramientasViewModel: widget.herramientasViewModel,
+        usuarioRepository: widget.usuarioRepository,
       );
     }
 

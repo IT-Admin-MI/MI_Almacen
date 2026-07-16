@@ -4,6 +4,7 @@ import 'package:mi_almacen/repositories/admin_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository_impl.dart';
 import 'package:mi_almacen/repositories/herramienta_repository_impl.dart';
+import 'package:mi_almacen/repositories/usuario_repository.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service_impl.dart';
@@ -16,6 +17,8 @@ import 'package:mi_almacen/services/herramienta_sync_service_impl.dart';
 import 'package:mi_almacen/services/image_storage_service_impl.dart';
 import 'package:mi_almacen/services/notification_service_impl.dart';
 import 'package:mi_almacen/services/sync_service_impl.dart';
+import 'package:mi_almacen/services/usuario_sync_service.dart';
+import 'package:mi_almacen/services/usuario_sync_service_impl.dart';
 import 'package:mi_almacen/services/vale_service_impl.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
@@ -110,6 +113,7 @@ Future<void> main() async {
   final compraRepositoy = CompraRepositoryImpl(databaseHelper: databaseHelper);
 
 
+
   final herramientaRepository = HerramientaRepositoryImpl(
     databaseHelper: databaseHelper,
   );
@@ -164,14 +168,19 @@ Future<void> main() async {
     compraRepository: compraRepository,
   );
 
+
+  final usuarioSyncService = UsuarioSyncServiceImpl(
+      firebaseService: firebaseService,
+      usuarioRepository: usuarioRepository);
+
   final syncService = SyncServiceImpl(
     proyectoRepository: proyectoRepository,
     materialRepository: materialRepository,
     driveService: DriveServiceImpl(),
     valeSyncService: valeSyncService,
     compraSyncService: compraSyncService,
+    usuarioSyncService: usuarioSyncService,
   );
-
 
   // ==========================
   // VIEWMODELS
@@ -228,6 +237,9 @@ Future<void> main() async {
     compraService: compraService,
     materialRepository: materialRepository,
     proyectoRepository: proyectoRepository,
+    compraRepository: compraRepositoy,
+    usuarioRepository: usuarioRepository,
+    solicitudSyncService: compraSolicitudSyncService,
   );
 
   // ==========================
@@ -251,6 +263,7 @@ Future<void> main() async {
       compraSyncService: compraSyncService,
       compraSolicitudSyncService: compraSolicitudSyncService,
       herramientasViewModel: herramientasViewModel,
+      usuarioRepository: usuarioRepository,
 
     ),
   );
@@ -272,6 +285,7 @@ class MyApp extends StatelessWidget {
   final CompraSyncService compraSyncService;
   final CompraSolicitudSyncService compraSolicitudSyncService;
   final HerramientasViewModel herramientasViewModel;
+  final UsuarioRepository usuarioRepository;
 
   const MyApp({
     super.key,
@@ -290,6 +304,7 @@ class MyApp extends StatelessWidget {
     required this.compraSyncService,
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
+    required this.usuarioRepository,
   });
 
   @override
@@ -313,6 +328,7 @@ class MyApp extends StatelessWidget {
         compraSyncService: compraSyncService,
         compraSolicitudSyncService: compraSolicitudSyncService,
         herramientasViewModel: herramientasViewModel,
+        usuarioRepository: usuarioRepository,
       ),
 
       routes: {
@@ -331,6 +347,7 @@ class MyApp extends StatelessWidget {
           compraSyncService: compraSyncService,
           compraSolicitudSyncService: compraSolicitudSyncService,
           herramientasViewModel: herramientasViewModel,
+          usuarioRepository: usuarioRepository,
         ),
       },
     );
