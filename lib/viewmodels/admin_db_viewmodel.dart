@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:mi_almacen/repositories/compra_repository.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 
 import '../models/Material.dart';
 import '../models/Proyecto.dart';
@@ -14,6 +16,8 @@ class AdminDbViewModel extends ChangeNotifier {
   final ProyectoRepository proyectoRepository;
   final MaterialRepository materialRepository;
   final ValeSyncService valeSyncService;
+  final CompraRepository compraRepository;
+  final CompraSyncService compraSyncService;
 
   AdminDbViewModel({
     required this.adminRepository,
@@ -21,6 +25,8 @@ class AdminDbViewModel extends ChangeNotifier {
     required this.proyectoRepository,
     required this.materialRepository,
     required this.valeSyncService,
+    required this.compraRepository,
+    required this.compraSyncService,
   });
 
   List<Map<String, dynamic>> vales = [];
@@ -30,6 +36,9 @@ class AdminDbViewModel extends ChangeNotifier {
   // Catálogos como objetos, para alimentar los Dropdown
   List<Material> materiales = [];
   List<Proyecto> proyectosCatalogo = [];
+
+  List<Map<String, dynamic>> compras = [];
+  List<Map<String, dynamic>> compraItems = [];
 
   bool cargando = false;
   String? error;
@@ -56,6 +65,16 @@ class AdminDbViewModel extends ChangeNotifier {
       materiales = await materialRepository.getAll();
       proyectosCatalogo =
           proyectos.map((p) => Proyecto.fromMap(p)).toList();
+
+      compras = await adminRepository.obtenerFilas(
+        'compras',
+        orderBy: 'fecha_solicitud DESC',
+      );
+
+      compraItems = await adminRepository.obtenerFilas(
+        'compra_items',
+        orderBy: 'compra_id',
+      );
     } catch (e) {
       error = 'Error cargando datos: $e';
     }
@@ -155,5 +174,71 @@ class AdminDbViewModel extends ChangeNotifier {
 
     await proyectoRepository
         .sincronizarFirebase();
+  }
+
+  Future<void> guardarCompra(Map<String, dynamic> fila) async {
+    await adminRepository.actualizarFila(
+      tabla: 'compras',
+      columnaId: 'id',
+      valorId: fila['id'],
+      valores: {
+        ...fila,
+        'sync_status': 0,
+      },
+    );
+
+    final compra = await compraRepository.getById(fila['id'] as String);
+
+    if (compra != null) {
+      await compraSyncService.sincronizarCompra(compra);
+    }
+
+    await cargarTodo();
+  }
+
+  Future<void> guardarCompraItem(Map<String, dynamic> fila) async {
+    await adminRepository.actualizarFila(
+      tabla: 'compra_items',
+      columnaId: 'id',
+      valorId: fila['id'],
+      valores: fila,
+    );
+
+    await adminRepository.actualizarFila(
+      tabla: 'compras',
+      columnaId: 'id',
+      valorId: fila['compra_id'],
+      valores: {
+        'sync_status': 0,
+      },
+    );
+
+    final compra = await compraRepository.getById(
+      fila['compra_id'] as String,
+    );
+
+    if (compra != null) {
+      await compraSyncService.sincronizarCompra(compra);
+    }
+
+    await cargarTodo();
+  }
+
+  Future<void> sincronizarCompras() async {
+    try {
+      for (final compraMap in compras) {
+        final compra = await compraRepository.getById(
+          compraMap['id'] as String,
+        );
+
+        if (compra != null) {
+          await compraSyncService.sincronizarCompra(compra);
+        }
+      }
+    } catch (e) {
+      error = 'Error sincronizando compras: $e';
+    }
+
+    await cargarTodo();
   }
 }

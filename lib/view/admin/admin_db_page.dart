@@ -28,6 +28,8 @@ enum _TipoCampo {
   unidadSelect,
 }
 
+
+
 class AdminDbPage extends StatefulWidget {
   final AdminDbViewModel viewModel;
 
@@ -81,8 +83,89 @@ class _AdminDbPageState extends State<AdminDbPage> {
 
   static const _unidades = ['pza', 'M', 'cm', 'mm', 'L', 'ml','m²','m³'];
 
+  static const _camposCompra = [
+
+    _CampoConfig(
+        key: 'id',
+        label: 'ID',
+        soloLectura: true),
+
+    _CampoConfig(
+        key: 'nombre',
+        label: 'Nombre'),
+
+    _CampoConfig(
+        key: 'comentario',
+        label: 'Comentario'),
+
+    _CampoConfig(
+        key: 'orden_compra',
+        label: 'Orden compra'),
+
+    _CampoConfig(
+        key: 'estado',
+        label: 'Estado',
+        tipo: _TipoCampo.entero),
+
+    _CampoConfig(
+        key: 'tipo_compra',
+        label: 'Tipo compra',
+        tipo: _TipoCampo.entero),
+
+    _CampoConfig(
+        key: 'fecha_entrega',
+        label: 'Fecha entrega'),
+
+    _CampoConfig(
+        key: 'liberada',
+        label: 'Liberada',
+        tipo: _TipoCampo.booleano),
+  ];
+
+  static const _camposCompraItem = [
+
+    _CampoConfig(
+        key: 'id',
+        label: 'ID',
+        soloLectura: true),
+
+    _CampoConfig(
+        key: 'compra_id',
+        label: 'Compra',
+        soloLectura: true),
+
+    _CampoConfig(
+        key: 'nombre',
+        label: 'Material',
+        tipo: _TipoCampo.materialSelect),
+
+    _CampoConfig(
+        key: 'proyecto_clave',
+        label: 'Proyecto',
+        tipo: _TipoCampo.proyectoSelect),
+
+    _CampoConfig(
+        key: 'cantidad',
+        label: 'Cantidad',
+        tipo: _TipoCampo.decimal),
+
+    _CampoConfig(
+        key: 'unidad',
+        label: 'Unidad',
+        tipo: _TipoCampo.unidadSelect),
+
+    _CampoConfig(
+        key: 'observaciones',
+        label: 'Observaciones'),
+
+    _CampoConfig(
+        key: 'numero_parte',
+        label: 'Número de parte'),
+  ];
+
   Future<void> _editarFila({
 
+    bool codigoMaterialValido =false,
     required Map<String, dynamic> fila,
     required List<_CampoConfig> campos,
     required String titulo,
@@ -98,11 +181,17 @@ class _AdminDbPageState extends State<AdminDbPage> {
     String? unidadSeleccionada;
 
     // Para el campo de material: código editable + descripción calculada.
-    final materialCodigoController =
-    TextEditingController(text: fila['material_codigo']?.toString() ?? '');
-    String descripcionMaterialActual =
-        fila['material_descripcion']?.toString() ?? '';
-    bool codigoMaterialValido = true;
+    final usaCompraItem = fila.containsKey('material_clave');
+
+    final materialCodigoController = TextEditingController(
+      text: usaCompraItem
+          ? (fila['material_clave']?.toString() ?? '')
+          : (fila['material_codigo']?.toString() ?? ''),
+    );
+
+    String descripcionMaterialActual = usaCompraItem
+        ? (fila['nombre']?.toString() ?? '')
+        : (fila['material_descripcion']?.toString() ?? '');
 
     void actualizarDescripcionMaterial(
         String codigo, void Function(void Function()) setDialogState) {
@@ -325,19 +414,26 @@ class _AdminDbPageState extends State<AdminDbPage> {
                               .where((m) => m.codigo == codigoIngresado)
                               .firstOrNull;
 
-                          filaActualizada['material_codigo'] = codigoIngresado;
-                          filaActualizada['material_descripcion'] =
-                              materialEncontrado?.descripcion ??
-                                  fila['material_descripcion'];
+                          if (usaCompraItem) {
+                            filaActualizada['material_clave'] = codigoIngresado;
+                            filaActualizada['nombre'] =
+                                materialEncontrado?.descripcion ?? fila['nombre'];
+                          } else {
+                            filaActualizada['material_codigo'] = codigoIngresado;
+                            filaActualizada['material_descripcion'] =
+                                materialEncontrado?.descripcion ??
+                                    fila['material_descripcion'];
+                          }
                           break;
 
                         case _TipoCampo.proyectoSelect:
                           final proyecto = proyectoSeleccionado;
                           if (proyecto != null) {
-                            filaActualizada['proyecto_clave'] =
-                                proyecto.clave;
-                            filaActualizada['proyecto_nombre'] =
-                                proyecto.nombre;
+                            filaActualizada['proyecto_clave'] = proyecto.clave;
+
+                            if (!usaCompraItem) {
+                              filaActualizada['proyecto_nombre'] = proyecto.nombre;
+                            }
                           }
                           break;
 
@@ -470,7 +566,7 @@ class _AdminDbPageState extends State<AdminDbPage> {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -482,8 +578,10 @@ class _AdminDbPageState extends State<AdminDbPage> {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Vales'),
-              Tab(text: 'Items'),
+              Tab(text: 'Vale Items'),
               Tab(text: 'Proyectos'),
+              Tab(text: 'Compras'),
+              Tab(text: 'Compra Items'),
             ],
           ),
         ),
@@ -532,6 +630,26 @@ class _AdminDbPageState extends State<AdminDbPage> {
                         subtituloClave: 'nombre',
                         onGuardar: widget.viewModel.guardarProyecto,
                         onRefresh: widget.viewModel.sincronizarProyectos,
+                      ),
+                      _listaGenerica(
+                        filas: widget.viewModel.compras,
+                        campos: _camposCompra,
+                        tituloClave: 'nombre',
+                        subtituloClave: 'orden_compra',
+                        onGuardar: widget.viewModel.guardarCompra,
+                        onRefresh: widget.viewModel.sincronizarCompras,
+                      ),
+
+                      // Compra Items
+                      _listaGenerica(
+                        filas: widget.viewModel.compraItems,
+                        campos: _camposCompraItem,
+                        tituloClave: 'nombre',
+                        subtituloClave: 'compra_id',
+                        onGuardar: widget.viewModel.guardarCompraItem,
+                        onRefresh: widget.viewModel.cargarTodo,
+                        materiales: widget.viewModel.materiales,
+                        proyectosCatalogo: widget.viewModel.proyectosCatalogo,
                       ),
                     ],
                   ),

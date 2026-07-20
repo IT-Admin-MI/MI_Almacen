@@ -19,19 +19,24 @@ class HistorialValesPage extends StatefulWidget {
 
 class _HistorialValesPageState
     extends State<HistorialValesPage> {
+  bool _inicializando = true;
 
   @override
   void initState() {
     super.initState();
     _cargar();
-
   }
 
-  void _cargar() async{
-  widget.viewModel.cargarVales();
-  await widget.viewModel.actualizar();
-  }
+  Future<void> _cargar() async {
+    await widget.viewModel.cargarVales();
+    //await widget.viewModel.actualizar();
 
+    if (!mounted) return;
+
+    setState(() {
+      _inicializando = false;
+    });
+  }
 
   Future<void> _seleccionarFecha({
     required bool desde,
@@ -58,6 +63,13 @@ class _HistorialValesPageState
 
   @override
   Widget build(BuildContext context) {
+    if (_inicializando) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return AnimatedBuilder(
       animation: widget.viewModel,

@@ -162,7 +162,7 @@ class ExcelServiceImpl implements ExcelService {
           TextCellValue(item?.material.codigo ?? ''),
           item != null ? DoubleCellValue(item.cantidad) : TextCellValue(''),
           TextCellValue(item?.unidad ?? ''),
-          TextCellValue(item?.proyecto?.clave ?? ''),
+          TextCellValue("${item?.proyecto?.clave ?? ''}${item?.proyecto?.nombre ?? ''}"),
           TextCellValue(item?.comentarioVale ?? ''),
         ]);
       }

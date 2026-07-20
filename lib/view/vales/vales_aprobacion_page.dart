@@ -640,22 +640,48 @@ class _AprobacionValesPageState extends State<AprobacionValesPage> {
     );
 
     if (ok == true) {
-
       final comentario = controller.text.trim();
 
-      final valeOriginal = widget.viewModel.vales
-          .firstWhere((v) => v.id == valeId);
+      final overlay = StatusOverlay.mostrarCargando(
+        context,
+        mensaje: aprobar
+            ? 'Aprobando vale...'
+            : 'Rechazando vale...',
+      );
 
-      final valeEditado = _buildUpdatedVale(valeOriginal);
+      try {
+        final valeOriginal =
+        widget.viewModel.vales.firstWhere((v) => v.id == valeId);
 
-      // 1. Guardar cambios
-      await widget.viewModel.actualizarVale(valeEditado);
+        final valeEditado = _buildUpdatedVale(valeOriginal);
 
-      // 2. Aprobar o rechazar
-      if (aprobar) {
-        await widget.viewModel.aprobarVale(valeId, comentario);
-      } else {
-        await widget.viewModel.rechazarVale(valeId, comentario);
+        // Guardar modificaciones realizadas al vale
+        await widget.viewModel.actualizarVale(valeEditado);
+
+        // Aprobar o rechazar
+        if (aprobar) {
+          await widget.viewModel.aprobarVale(valeId, comentario);
+        } else {
+          await widget.viewModel.rechazarVale(valeId, comentario);
+        }
+
+        if (!mounted) return;
+
+        overlay.completar(
+          exito: true,
+          mensaje: aprobar
+              ? 'Vale aprobado correctamente'
+              : 'Vale rechazado correctamente',
+        );
+      } catch (e) {
+        if (!mounted) return;
+
+        overlay.completar(
+          exito: false,
+          mensaje: aprobar
+              ? 'Error al aprobar el vale'
+              : 'Error al rechazar el vale',
+        );
       }
     }
 

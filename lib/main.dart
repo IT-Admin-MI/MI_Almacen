@@ -230,6 +230,8 @@ Future<void> main() async {
     proyectoRepository: proyectoRepository,
     valeSyncService: valeSyncService,
     materialRepository: materialRepository,
+    compraRepository: compraRepositoy,
+    compraSyncService: compraSyncService,
   );
 
   final compraService = CompraServiceImpl(

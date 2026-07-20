@@ -146,14 +146,14 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
     return exito;
   }
 
-  Future<void> crearSolicitud({
+  Future<bool> crearSolicitud({
     required String descripcion,
     required bool requiereRevision,
   }) async {
     final sesion = await authService.obtenerSesion();
 
     if (sesion == null) {
-      return;
+      return false;
     }
 
     final solicitud = SolicitudCompra(
@@ -173,6 +173,7 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
 
     // Sync de esta solicitud en particular, sin bloquear ni recargar todo.
     unawaited(compraSolicitudSyncService.sincronizarSolicitud(solicitud));
+    return true;
   }
 
   Future<ResultadoAvance> avanzarEstado(Compra compra) async {

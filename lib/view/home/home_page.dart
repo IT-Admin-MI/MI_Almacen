@@ -229,9 +229,9 @@ class _HomePageState
   void _agregarGrupo(List<Widget> menu, List<Widget> grupo) {
     if (grupo.isEmpty) return;
 
-    if (menu.isNotEmpty) {
-      menu.add(const Divider());
-    }
+  //  if (menu.isNotEmpty) {
+  //    menu.add(const Divider());
+  //  }
 
     menu.addAll(grupo);
   }
@@ -686,26 +686,27 @@ class _HomePageState
             MaterialPageRoute(
               builder: (_) => ValesPage(
                 viewModel: widget.valeViewModel,
+                historialValesViewModel: widget.historialValesViewModel,
               ),
             ),
           );
         },
       ),
-      ListTile(
-        leading: const Icon(Icons.history),
-        title: const Text('Historial de Vales'),
-        onTap: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => HistorialValesPage(
-                viewModel: widget.historialValesViewModel,
-              ),
-            ),
-          );
-        },
-      ),
+//      ListTile(
+//        leading: const Icon(Icons.history),
+//        title: const Text('Historial de Vales'),
+//        onTap: () {
+//          Navigator.pop(context);
+//          Navigator.push(
+//            context,
+//            MaterialPageRoute(
+//              builder: (_) => HistorialValesPage(
+//                viewModel: widget.historialValesViewModel,
+//              ),
+//            ),
+//          );
+//        },
+//      ),
     ]);
 
     _agregarGrupo(menu, [
@@ -768,11 +769,7 @@ class _HomePageState
     ]);
 
     _agregarGrupo(menu, [
-      if (usuario != null &&
-          (usuario!.rol == Roles.administrador ||
-              usuario!.rol == Roles.supervisor ||
-              usuario!.rol == Roles.compras ||
-              usuario!.rol == Roles.almacen))
+      if (usuario != null )
         ListTile(
           leading: const Icon(Icons.shopping_bag),
           title: const Text('Seguimiento de Compras'),
@@ -789,7 +786,7 @@ class _HomePageState
                     widget.compraSolicitudSyncService,
                     compraSyncService: widget.compraSyncService,
                     usuarioRepository: widget.usuarioRepository,
-                  ),
+                  ), viewModelCompras: widget.historialComprasViewModel,
                 ),
               ),
             );
@@ -816,28 +813,26 @@ class _HomePageState
           },
         ),
 
-      if (usuario != null &&
-          (usuario!.rol == Roles.compras ||
-              usuario!.rol == Roles.administrador))
-        ListTile(
-          leading: const Icon(Icons.manage_history),
-          title: const Text('Historial de compras'),
-          onTap: () {
-            Navigator.pop(context);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => HistorialComprasPage(
-                  viewModel: HistorialComprasViewModel(
-                    compraService: widget.compraService,
-                    compraSyncService: widget.compraSyncService,
-                    usuarioRepository: widget.usuarioRepository,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+//      if (usuario != null)
+//        ListTile(
+//          leading: const Icon(Icons.manage_history),
+//          title: const Text('Historial de compras'),
+//          onTap: () {
+//            Navigator.pop(context);
+//            Navigator.push(
+//              context,
+//              MaterialPageRoute(
+//                builder: (_) => HistorialComprasPage(
+//                  viewModel: HistorialComprasViewModel(
+//                    compraService: widget.compraService,
+//                    compraSyncService: widget.compraSyncService,
+//                    usuarioRepository: widget.usuarioRepository,
+//                  ),
+//                ),
+//              ),
+//            );
+//          },
+//        ),
     ]);
 
     _agregarGrupo(menu, [
@@ -860,13 +855,11 @@ class _HomePageState
         ),
     ]);
 
-    _agregarGrupo(menu, [
       ListTile(
         leading: const Icon(Icons.logout),
         title: const Text('Cerrar sesión'),
         onTap: cerrarSesion,
-      ),
-    ]);
+      );
 
     return Scaffold(
       appBar: AppBar(
@@ -887,7 +880,7 @@ class _HomePageState
                   children: [
                     ClipRRect(
                       child: Image.asset(
-                        'assets/images/logo_bn.png',
+                        'assets/images/logo.png',
                         width: 56,
                         height: 50,
                       ),
@@ -905,16 +898,34 @@ class _HomePageState
                   ],
                 ),
               ),
+
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: menu,
                 ),
               ),
+
+              const Divider(height: 1),
+
+              ListTile(
+                leading: const Icon(
+                  Icons.logout,
+                  color: Colors.red, // Ícono rojo
+                ),
+                title: const Text(
+                  'Cerrar sesión',
+                  style: TextStyle(color: Colors.red), // Texto rojo
+                ),
+                onTap: cerrarSesion,
+              )
+
             ],
           ),
         ),
       ),
+
+
       floatingActionButton: esAdmin
           ? FloatingActionButton(
         onPressed: _mostrarDialogoNuevoProyecto,

@@ -131,61 +131,6 @@ class _HistorialComprasPageState extends State<HistorialComprasPage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: DropdownButtonFormField<String?>(
-                        value: widget.viewModel.compradores
-                            .contains(widget.viewModel.compradorSeleccionado)
-                            ? widget.viewModel.compradorSeleccionado
-                            : null,
-                        decoration: const InputDecoration(
-                          labelText: 'Comprador',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          const DropdownMenuItem<String?>(
-                            value: null,
-                            child: Text("Todos"),
-                          ),
-                          ...widget.viewModel.compradores.map(
-                                (id) => DropdownMenuItem<String?>(
-                              value: id,
-                              child: Text(widget.viewModel.nombreComprador(id)),
-                            ),
-                          ),
-                        ],
-                        onChanged: widget.viewModel.seleccionarComprador,
-                      ),
-                    ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: DropdownButtonFormField<EstadoCompra?>(
-                        value: widget.viewModel.estadoSeleccionado,
-                        decoration: const InputDecoration(
-                          labelText: 'Estado',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: [
-                          const DropdownMenuItem<EstadoCompra?>(
-                            value: null,
-                            child: Text("Todos"),
-                          ),
-                          ...EstadoCompra.values.map(
-                                (e) => DropdownMenuItem<EstadoCompra?>(
-                              value: e,
-                              child: Text(estadoCompraLabels[e] ?? e.name),
-                            ),
-                          ),
-                        ],
-                        onChanged: widget.viewModel.seleccionarEstado,
-                      ),
-                    ),
-                  ),
-
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
                         children: [
                           Expanded(

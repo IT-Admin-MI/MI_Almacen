@@ -43,135 +43,135 @@ class _HerramientasPageState extends State<HerramientasPage> {
               content: SizedBox(
                 width: 400,
                 child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nombreCtrl,
-                      decoration: InputDecoration(
-                        labelText: 'Herramienta',
-                        border: const OutlineInputBorder(),
-                        errorText: errorNombre,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: codigoController,
-                      decoration: const InputDecoration(
-                        labelText: "Código",
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                      ),
-                      onChanged: (value) async {
-                        await widget.viewModel.buscarMaterial(value);
-                        setDialogState(() {});
-                      },
-                    ),
-
-                    if(widget.viewModel.resultadosBusquedaMaterial.isNotEmpty)
-
-                      Container(
-                        height: 180,
-
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-
-                        child: ListView.builder(
-                          itemCount:
-                          widget.viewModel.resultadosBusquedaMaterial.length,
-                          itemBuilder: (_,index){
-                            final material =
-                            widget.viewModel.resultadosBusquedaMaterial[index];
-                            return ListTile(
-                              dense: true,
-                              title: Text(material.descripcion),
-                              subtitle: Text(material.codigo),
-                              trailing: Text(material.existencia.toString()),
-                              onTap: () {
-
-                                codigoController.text = material.codigo;
-                                nombreCtrl.text = material.descripcion;
-
-                                widget.viewModel.limpiarBusquedaMaterial();
-
-                                setDialogState(() {});
-
-                              },
-                            );
-                          },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nombreCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Herramienta',
+                          border: const OutlineInputBorder(),
+                          errorText: errorNombre,
                         ),
                       ),
-
-                    const SizedBox(height: 12),
-
-                    DropdownButtonFormField<Usuario>(
-                      value: usuarioSeleccionado,
-                      isExpanded: true,
-
-                      decoration: const InputDecoration(
-                        labelText: 'Prestar a',
-                        border: OutlineInputBorder(),
-                      ),
-
-                      items: widget.viewModel.usuarios.map((u) {
-                        return DropdownMenuItem<Usuario>(
-                          value: u,
-                          child: Text(
-                            '${u.nombre} (${u.descripcion})',
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
-                        );
-                      }).toList(),
-
-                      onChanged: (usuario) {
-                        setDialogState(() {
-                          usuarioSeleccionado = usuario;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: comentarioCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Comentario (opcional)',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // SELECTOR DE IMAGEN
-                    if (imagenPath != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.file(
-                          File(imagenPath!),
-                          height: 140,
-                          fit: BoxFit.cover,
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: codigoController,
+                        decoration: const InputDecoration(
+                          labelText: "Código",
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
                         ),
-                      ),
-                    const SizedBox(height: 8),
-                    if (!kIsWeb && Platform.isAndroid)
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.camera_alt),
-                        label: Text(
-                          imagenPath == null
-                              ? 'Tomar fotografía'
-                              : 'Cambiar fotografía',
-                        ),
-                        onPressed: () async {
-                          final path = await widget.viewModel.tomarFotografia();
-                          if (path != null) {
-                            setDialogState(() => imagenPath = path);
-                          }
+                        onChanged: (value) async {
+                          await widget.viewModel.buscarMaterial(value);
+                          setDialogState(() {});
                         },
                       ),
-                  ],
-                ),
-              ),),
+
+                      if(widget.viewModel.resultadosBusquedaMaterial.isNotEmpty)
+
+                        Container(
+                          height: 180,
+
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+
+                          child: ListView.builder(
+                            itemCount:
+                            widget.viewModel.resultadosBusquedaMaterial.length,
+                            itemBuilder: (_,index){
+                              final material =
+                              widget.viewModel.resultadosBusquedaMaterial[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(material.descripcion),
+                                subtitle: Text(material.codigo),
+                                trailing: Text(material.existencia.toString()),
+                                onTap: () {
+
+                                  codigoController.text = material.codigo;
+                                  nombreCtrl.text = material.descripcion;
+
+                                  widget.viewModel.limpiarBusquedaMaterial();
+
+                                  setDialogState(() {});
+
+                                },
+                              );
+                            },
+                          ),
+                        ),
+
+                      const SizedBox(height: 12),
+
+                      DropdownButtonFormField<Usuario>(
+                        value: usuarioSeleccionado,
+                        isExpanded: true,
+
+                        decoration: const InputDecoration(
+                          labelText: 'Prestar a',
+                          border: OutlineInputBorder(),
+                        ),
+
+                        items: widget.viewModel.usuarios.map((u) {
+                          return DropdownMenuItem<Usuario>(
+                            value: u,
+                            child: Text(
+                              '${u.nombre} (${u.descripcion})',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          );
+                        }).toList(),
+
+                        onChanged: (usuario) {
+                          setDialogState(() {
+                            usuarioSeleccionado = usuario;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: comentarioCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Comentario (opcional)',
+                          border: OutlineInputBorder(),
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // SELECTOR DE IMAGEN
+                      if (imagenPath != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            File(imagenPath!),
+                            height: 140,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                      if (!kIsWeb && Platform.isAndroid)
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.camera_alt),
+                          label: Text(
+                            imagenPath == null
+                                ? 'Tomar fotografía'
+                                : 'Cambiar fotografía',
+                          ),
+                          onPressed: () async {
+                            final path = await widget.viewModel.tomarFotografia();
+                            if (path != null) {
+                              setDialogState(() => imagenPath = path);
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                ),),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
@@ -210,14 +210,12 @@ class _HerramientasPageState extends State<HerramientasPage> {
 
                     if (mounted) {
                       Navigator.pop(context);
-
-                      StatusOverlay.mostrar(
-                        context,
-                        exito: ok,
-                        mensaje: ok
-                            ? 'Préstamo registrado'
-                            : 'Error al registrar el préstamo',
-                        duracion: const Duration(seconds: 2),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(ok
+                              ? 'Préstamo registrado'
+                              : 'Error al registrar el préstamo'),
+                        ),
                       );
                     }
                   },
@@ -463,6 +461,7 @@ class _HerramientasPageState extends State<HerramientasPage> {
       animation: widget.viewModel,
       builder: (context, _) {
         final herramientas = widget.viewModel.herramientas;
+
         return Scaffold(
           appBar: AppBar(
             centerTitle: true,
@@ -471,94 +470,126 @@ class _HerramientasPageState extends State<HerramientasPage> {
               height: 40,
               fit: BoxFit.contain,
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.sync),
-                onPressed: widget.viewModel.actualizar,
-              ),
-            ],
           ),
           body: SafeArea(
-            // Solución: Se envuelve en un scroll view para que RefreshIndicator funcione
             child: RefreshIndicator(
               onRefresh: widget.viewModel.actualizar,
-              child: CustomScrollView(
-                slivers: [
-                  SliverFillRemaining(
-                    hasScrollBody: true,
-                    child: Column(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text(
-                            'Herramientas prestadas',
-                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              child: Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text(
+                      'Herramientas prestadas',
+                      style:
+                      TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+
+                  SwitchListTile(
+                    title: const Text('Mostrar solo prestadas'),
+                    value: widget.viewModel.soloPrestadas,
+                    onChanged: widget.viewModel.cambiarFiltro,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DropdownButtonFormField<String?>(
+                      value: widget.viewModel.departamentoSeleccionado,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Filtrar por departamento',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Todos los departamentos'),
+                        ),
+                        ...widget.viewModel.departamentos.map(
+                              (d) => DropdownMenuItem<String?>(
+                            value: d,
+                            child: Text(d),
                           ),
                         ),
-                        SwitchListTile(
-                          title: const Text('Mostrar solo prestadas'),
-                          value: widget.viewModel.soloPrestadas,
-                          onChanged: widget.viewModel.cambiarFiltro,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: DropdownButtonFormField<String?>(
-                            value: widget.viewModel.departamentoSeleccionado,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Filtrar por departamento',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: [
-                              const DropdownMenuItem<String?>(
-                                value: null,
-                                child: Text('Todos los departamentos'),
-                              ),
-                              ...widget.viewModel.departamentos.map(
-                                    (d) => DropdownMenuItem<String?>(
-                                  value: d,
-                                  child: Text(d),
-                                ),
-                              ),
-                            ],
-                            onChanged: widget.viewModel.cambiarDepartamento,
+                      ],
+                      onChanged: widget.viewModel.cambiarDepartamento,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: widget.viewModel.cargando
+                        ? const Center(child: CircularProgressIndicator())
+                        : herramientas.isEmpty
+                        ? const Center(child: Text('No hay registros'))
+                        : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: herramientas.length,
+                      itemBuilder: (context, index) {
+                        final h = herramientas[index];
+                        final prestada =
+                            h.estado == EstadoHerramienta.prestado;
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: widget.viewModel.cargando
-                              ? const Center(child: CircularProgressIndicator())
-                              : herramientas.isEmpty
-                              ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  'assets/images/logo_bn.png',
-                                  width: 100,
-                                  color: Colors.grey.withOpacity(0.4),
-                                  colorBlendMode: BlendMode.modulate,
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Sin herramientas',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.grey,
+                          child: ListTile(
+                              onLongPress: () {
+                                if (h.estado == EstadoHerramienta.devuelto) {
+                                  _mostrarDialogoReutilizar(h);
+                                }
+                              },
+
+                              leading: _buildImagen(h),
+
+                              title: Text(h.nombre),
+
+                              subtitle: Text(
+                                'Prestado a: ${h.usuarioNombre}\n'
+                                    '${_formatearFecha(h.fechaPrestamo)}\n'
+                                    'Estado: ${EstadoHerramienta.nombre(h.estado)}'
+                                    '${h.comentario != null && h.comentario!.isNotEmpty ? '\n${h.comentario}' : ''}',
+                              ),
+
+                              isThreeLine: true,
+
+                              trailing: prestada
+                                  ? SizedBox(
+                                height: 150,
+                                width: 45,
+                                child: ElevatedButton(
+                                  onPressed: () => _confirmarDevolucion(h),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    padding: EdgeInsets.zero,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.assignment_return,
+                                    size: 30,
                                   ),
                                 ),
-                              ],
-                            ),
-                          )
-                              : ListView.builder(
-                            // RECOMENDACIÓN: Aquí debes renderizar tu lista de herramientas
-                            itemCount: herramientas.length,
-                            itemBuilder: (context, index) {
-                              return ListTile(title: Text(herramientas[index].toString()));
-                            },
+                              )
+                                  : Container(
+                                width: 45, // Ancho horizontal extendido
+                                height: 150, // Alto del contenedor
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.2), // Fondo del rectángulo
+                                  borderRadius: BorderRadius.circular(8), // Bordes redondeados
+                                ),
+                                child: const Icon(
+                                  Icons.check_box_rounded,
+                                  size: 35, // Ajustado para caber dentro del contenedor
+                                  color: Colors.grey,
+                                ),
+                              )
+
                           ),
-                        ), // <- CORRECCIÓN: Faltaba cerrar el widget Expanded
-                      ], // <- CORRECCIÓN: Faltaba cerrar la lista de children de la Column
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -575,5 +606,4 @@ class _HerramientasPageState extends State<HerramientasPage> {
       },
     );
   }
-
 }

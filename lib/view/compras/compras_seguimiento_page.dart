@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:mi_almacen/models/Compra.dart';
+import 'package:mi_almacen/view/compras/historial_compras_page.dart';
+import 'package:mi_almacen/viewmodels/historial_compras_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/seguimiento_compras_viewmodel.dart';
 import 'package:mi_almacen/widgets/compra_timeline_card.dart';
 import 'package:mi_almacen/widgets/status_overlay.dart';
 
 class SeguimientoComprasPage extends StatefulWidget {
   final SeguimientoComprasViewModel viewModel;
+  final HistorialComprasViewModel viewModelCompras;
 
   const SeguimientoComprasPage({
     super.key,
     required this.viewModel,
+    required this.viewModelCompras,
   });
 
   @override
@@ -19,6 +23,7 @@ class SeguimientoComprasPage extends StatefulWidget {
 
 class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
   final Set<String> _procesando = {}; // NUEVO: ids de compras en progreso
+  bool _inicializando = true;
 
   @override
   void initState() {
@@ -28,8 +33,20 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
   }
 
   Future<void> _inicializar() async {
-    await widget.viewModel.sincronizar();
-    await widget.viewModel.cargar();
+    setState(() {
+      _inicializando = true;
+    });
+
+    try {
+      //await widget.viewModel.sincronizar();
+      await widget.viewModel.cargar();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _inicializando = false;
+        });
+      }
+    }
   }
   @override
   void dispose() {
@@ -43,6 +60,14 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_inicializando) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -53,21 +78,60 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
             height: 40,
             fit: BoxFit.contain,
           ),
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: "Estado de compras"),
-              Tab(text: "Solicitudes"),
-            ],
-          ),
+          actions: [
+            IconButton(
+              iconSize: 34.0,
+              icon: const Icon(Icons.history),
+              tooltip: 'Historial de liberados',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HistorialComprasPage(
+                      viewModel: HistorialComprasViewModel(
+                        compraService: widget.viewModelCompras.compraService,
+                        compraSyncService: widget.viewModelCompras.compraSyncService,
+                        usuarioRepository: widget.viewModelCompras.usuarioRepository,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: _mostrarDialogoSolicitud,
           child: const Icon(Icons.add),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _estadoCompras(),
-            _solicitudes(),
+            const SizedBox(height: 12),
+            const Text(
+              'Seguimiento de compras',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+
+            const TabBar(
+              tabs: [
+                Tab(text: "Estado de compras"),
+                Tab(text: "Solicitudes"),
+              ],
+            ),
+
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _estadoCompras(),
+                  _solicitudes(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -136,39 +200,53 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
 
   Future<void> _avanzar(Compra compra) async {
     setState(() => _procesando.add(compra.id!));
+
+    final overlay = StatusOverlay.mostrarCargando(
+      context,
+      mensaje: 'Actualizando compra...',
+    );
+
     final resultado = await widget.viewModel.avanzarEstado(compra);
-    if (mounted) setState(() => _procesando.remove(compra.id!));
 
-    if (!resultado.success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo actualizar el estado. Intenta de nuevo.')),
-        );
-      }
-      return;
-    }
+    overlay.completar(
+      exito: resultado.success,
+      mensaje: resultado.success
+          ? resultado.liberada
+          ? 'Compra liberada correctamente'
+          : 'Estado actualizado'
+          : 'Error al actualizar compra',
+      duracion: const Duration(seconds: 1),
+    );
 
-    if (resultado.liberada && mounted) {
-      StatusOverlay.mostrar(
-        context,
-        exito: true,
-        mensaje: 'Compra finalizada',
-        duracion: const Duration(seconds: 2),
-      );
+    if (mounted) {
+      setState(() => _procesando.remove(compra.id!));
     }
   }
 
   Future<void> _aprobarRevision(Compra compra) async {
     setState(() => _procesando.add(compra.id!));
-    final ok = await widget.viewModel.aprobarRevisionSolicitante(compra);
-    if (mounted) setState(() => _procesando.remove(compra.id!));
 
-    if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo aprobar la compra. Intenta de nuevo.')),
-      );
+    final overlay = StatusOverlay.mostrarCargando(
+      context,
+      mensaje: 'Aprobando compra...',
+    );
+
+    final ok = await widget.viewModel.aprobarRevisionSolicitante(compra);
+
+    overlay.completar(
+      exito: ok,
+      mensaje: ok
+          ? 'Compra aprobada'
+          : 'No se pudo aprobar la compra',
+      duracion: const Duration(seconds: 2),
+    );
+
+    if (mounted) {
+      setState(() => _procesando.remove(compra.id!));
     }
   }
+
+
   Widget _envolverConSync(Widget child) {
     final vm = widget.viewModel;
 
@@ -297,11 +375,28 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
                 ),
                 FilledButton(
                   onPressed: () async {
-                    await widget.viewModel.crearSolicitud(
+
+                    final overlay = StatusOverlay.mostrarCargando(
+                      context,
+                      mensaje: 'Creando solicitud...',
+                    );
+
+                    final ok = await widget.viewModel.crearSolicitud(
                       descripcion: descripcionController.text,
                       requiereRevision: requiereRevision,
                     );
-                    if (mounted) Navigator.pop(context);
+
+                    overlay.completar(
+                      exito: ok,
+                      mensaje: ok
+                          ? 'Solicitud creada correctamente'
+                          : 'Error al crear solicitud',
+                      duracion: const Duration(seconds: 2),
+                    );
+
+                    if (ok && mounted) {
+                      Navigator.pop(context);
+                    }
                   },
                   child: const Text("Crear"),
                 ),

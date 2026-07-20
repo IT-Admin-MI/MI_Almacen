@@ -4,6 +4,7 @@ import 'package:mi_almacen/models/CompraItem.dart';
 import 'package:mi_almacen/models/compra_solicitud.dart';
 import 'package:mi_almacen/utils/id_generator.dart';
 import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
+import 'package:mi_almacen/widgets/status_overlay.dart';
 
 class ComprasPage extends StatefulWidget {
   final CompraViewModel viewModel;
@@ -20,11 +21,21 @@ class ComprasPage extends StatefulWidget {
 }
 
 class _ComprasPageState extends State<ComprasPage> {
+  bool _inicializando = true;
   @override
   void initState() {
     super.initState();
     widget.viewModel.addListener(_refresh);
+    _inicializar();
+  }
+  void _inicializar() async {
+    //widget.viewModel.sincronizar();
     widget.viewModel.cargar();
+    if (!mounted) return;
+
+    setState(() {
+      _inicializando = false;
+    });
   }
 
   @override
@@ -39,6 +50,13 @@ class _ComprasPageState extends State<ComprasPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_inicializando) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     final vm = widget.viewModel;
     return Scaffold(
       appBar: AppBar(
@@ -49,54 +67,106 @@ class _ComprasPageState extends State<ComprasPage> {
           fit: BoxFit.contain,
         ),
       ),
-      body: vm.cargando
-          ? const Center(child: CircularProgressIndicator())
-          : vm.solicitudes.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/logo_bn.png',
-              width: 100,
-              color: Colors.grey.withOpacity(0.4),
-              colorBlendMode: BlendMode.modulate,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Sin solicitudes pendientes',
+      body: Column(
+        children: [
+          const SizedBox(height: 12),
+          const Center(
+            child: Text(
+              'Crear nueva compra',
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
-      )
-          : ListView.builder(
-        itemCount: vm.solicitudes.length,
-        itemBuilder: (context, index) {
-          final solicitud = vm.solicitudes[index];
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                final exito = await widget.viewModel.sincronizar();
 
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: ListTile(
-              onTap: () => _abrirRevision(solicitud),
-              title: Text(
-                solicitud.descripcion,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                if (!mounted) return;
+
+                StatusOverlay.mostrar(
+                  context,
+                  exito: exito,
+                  mensaje: exito
+                      ? 'Sincronización completada'
+                      : 'Error al sincronizar',
+                  duracion: const Duration(seconds: 2),
+                );
+              },
+              child: vm.cargando
+                  ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 500,
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ],
+              )
+                  : vm.solicitudes.isEmpty
+                  ? ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.65,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo_bn.png',
+                            width: 150,
+                            color: Colors.grey.withOpacity(0.4),
+                            colorBlendMode: BlendMode.modulate,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Sin solicitudes pendientes',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              )
+                  : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                itemCount: vm.solicitudes.length,
+                itemBuilder: (context, index) {
+                  final solicitud = vm.solicitudes[index];
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: ListTile(
+                      onTap: () => _abrirRevision(solicitud),
+                      title: Text(
+                        solicitud.descripcion,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        'Solicitante: ${vm.nombreSolicitante(solicitud.solicitanteId)}\n'
+                            '${solicitud.fechaSolicitud.day}/${solicitud.fechaSolicitud.month}/${solicitud.fechaSolicitud.year}'
+                            '${solicitud.requiereRevisionSolicitante ? ' · Requiere revisión' : ''}',
+                      ),
+                      isThreeLine: true,
+                      trailing: const Icon(Icons.chevron_right),
+                    ),
+                  );
+                },
               ),
-              subtitle: Text(
-                'Solicitante: ${vm.nombreSolicitante(solicitud.solicitanteId)}\n'
-                    '${solicitud.fechaSolicitud.day}/${solicitud.fechaSolicitud.month}/${solicitud.fechaSolicitud.year}'
-                    '${solicitud.requiereRevisionSolicitante ? ' · Requiere revisión' : ''}',
-              ),
-              isThreeLine: true,
-              trailing: const Icon(Icons.chevron_right),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -525,25 +595,47 @@ class _ComprasPageState extends State<ComprasPage> {
 
     setGuardando(true);
 
-    final compra = await widget.viewModel.aprobar(
-      solicitud: solicitud,
-      ordenCompra: ordenCompra.trim(),
-      tipoCompra: tipoCompra,
-      compradorId: widget.usuarioId,
+    final overlay = StatusOverlay.mostrarCargando(
+      context,
+      mensaje: 'Aprobando solicitud...',
     );
 
-    setGuardando(false);
+    try {
+      final compra = await widget.viewModel.aprobar(
+        solicitud: solicitud,
+        ordenCompra: ordenCompra.trim(),
+        tipoCompra: tipoCompra,
+        compradorId: widget.usuarioId,
+      );
 
-    if (compra == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo aprobar la solicitud. Intenta de nuevo.')),
+      setGuardando(false);
+
+      if (compra == null) {
+        overlay.completar(
+          exito: false,
+          mensaje: 'No se pudo aprobar la solicitud',
         );
+        return;
       }
-      return;
-    }
 
-    if (mounted) Navigator.pop(context);
+      overlay.completar(
+        exito: true,
+        mensaje: 'Solicitud aprobada correctamente',
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      setGuardando(false);
+
+      if (!mounted) return;
+
+      overlay.completar(
+        exito: false,
+        mensaje: 'Error al aprobar la solicitud',
+      );
+    }
   }
 
   Future<void> _rechazar(
@@ -577,22 +669,44 @@ class _ComprasPageState extends State<ComprasPage> {
 
     setGuardando(true);
 
-    final ok = await widget.viewModel.rechazar(
-      solicitud: solicitud,
-      motivo: motivoController.text.trim(),
+    final overlay = StatusOverlay.mostrarCargando(
+      context,
+      mensaje: 'Rechazando solicitud...',
     );
 
-    setGuardando(false);
+    try {
+      final ok = await widget.viewModel.rechazar(
+        solicitud: solicitud,
+        motivo: motivoController.text.trim(),
+      );
 
-    if (!ok) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo rechazar la solicitud. Intenta de nuevo.')),
+      setGuardando(false);
+
+      if (!ok) {
+        overlay.completar(
+          exito: false,
+          mensaje: 'No se pudo rechazar la solicitud',
         );
+        return;
       }
-      return;
-    }
 
-    if (mounted) Navigator.pop(context); // cierra el bottom sheet
+      overlay.completar(
+        exito: true,
+        mensaje: 'Solicitud rechazada correctamente',
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (_) {
+      setGuardando(false);
+
+      if (!mounted) return;
+
+      overlay.completar(
+        exito: false,
+        mensaje: 'Error al rechazar la solicitud',
+      );
+    }
   }
 }

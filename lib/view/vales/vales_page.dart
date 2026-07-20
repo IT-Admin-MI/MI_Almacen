@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/view/vales/historial_vales_page.dart';
+import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/widgets/status_overlay.dart';
 
 import '../../models/Material.dart';
@@ -9,10 +11,12 @@ import '../../viewmodels/vale_viewmodel.dart';
 class ValesPage extends StatefulWidget {
 
   final ValeViewModel viewModel;
+  final HistorialValesViewModel historialValesViewModel;
 
   const ValesPage({
     super.key,
     required this.viewModel,
+    required this.historialValesViewModel,
   });
 
   @override
@@ -69,12 +73,24 @@ class _ValesPageState
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-
-        title: Image.asset(
-          'assets/images/logo_ext.png',
-          height: 40,
-          fit: BoxFit.contain,
-        ),
+        title: Image.asset('assets/images/logo_ext.png', height: 40, fit: BoxFit.contain),
+        actions: [
+          IconButton(
+            iconSize: 34.0,
+            icon: const Icon(Icons.history),
+            tooltip: 'Historial de liberados',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => HistorialValesPage(
+                    viewModel: widget.historialValesViewModel,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
 
       body: Column(
