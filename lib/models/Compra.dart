@@ -16,8 +16,8 @@ enum EstadoCompra {
   productoEnviado,
   productoRecibido,
   factura,
-  agregadoSistema,
   revisionSolicitante,
+  agregadoSistema,
   liberada,
 }
 

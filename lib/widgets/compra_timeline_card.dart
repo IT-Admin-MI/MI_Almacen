@@ -6,17 +6,102 @@ class CompraTimelineCard extends StatelessWidget {
   final Compra compra;
   final bool expandido;
   final bool esUsuarioCompras;
+  final bool esSolicitante;
+  final bool pendienteAprobacion;
+  final bool procesando; // NUEVO
   final VoidCallback onToggle;
   final VoidCallback onAvanzar;
+  final VoidCallback onAprobarRevision;
 
   const CompraTimelineCard({
     super.key,
     required this.compra,
     required this.expandido,
     required this.esUsuarioCompras,
+    required this.esSolicitante,
+    required this.pendienteAprobacion,
+    required this.procesando, // NUEVO
     required this.onToggle,
     required this.onAvanzar,
+    required this.onAprobarRevision,
   });
+
+  // build() sin cambios...
+
+  Widget _accion(BuildContext context, {required bool esUltimoEstado}) {
+    if (pendienteAprobacion && esSolicitante) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.metint01,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: procesando ? null : onAprobarRevision,
+          icon: procesando
+              ? const SizedBox(
+            height: 16,
+            width: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+          )
+              : const Icon(Icons.check_circle_outline),
+          label: Text(procesando ? 'Aprobando...' : 'Aprobar compra'),
+        ),
+      );
+    }
+
+    if (pendienteAprobacion && esUsuarioCompras) {
+      // sin cambios
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.orange.withOpacity(0.4)),
+        ),
+        child: Row(
+          children: const [
+            Icon(Icons.hourglass_top, size: 18, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Esperando aprobación del solicitante',
+                style: TextStyle(color: Colors.orange, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (esUsuarioCompras) {
+      return SizedBox(
+        width: double.infinity,
+        child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.metint01,
+            foregroundColor: Colors.white,
+          ),
+          onPressed: (procesando || esUltimoEstado) ? null : onAvanzar,
+          icon: procesando
+              ? const SizedBox(
+            height: 16,
+            width: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+          )
+              : const Icon(Icons.arrow_forward),
+          label: Text(
+            procesando
+                ? 'Guardando...'
+                : (esUltimoEstado ? 'Compra liberada' : 'Pasar al siguiente estado'),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,26 +141,8 @@ class CompraTimelineCard extends StatelessWidget {
               if (expandido) ...[
                 const SizedBox(height: 4),
                 _TimelineExpandido(estadoActualIndex: estadoActualIndex),
-
-                if (esUsuarioCompras) ...[
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.metint01, // Color de fondo del botón
-                        foregroundColor: Colors.white, // Color del texto/icono
-                      ),
-                      onPressed: esUltimoEstado ? null : onAvanzar,
-                      icon: const Icon(Icons.arrow_forward),
-                      label: Text(
-                        esUltimoEstado
-                            ? 'Compra liberada'
-                            : 'Pasar al siguiente estado',
-                      ),
-                    ),
-                  ),
-                ],
+                const SizedBox(height: 12),
+                _accion(context, esUltimoEstado: esUltimoEstado),
               ],
             ],
           ),

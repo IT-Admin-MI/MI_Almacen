@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/models/CompraItem.dart';
-import 'package:mi_almacen/models/compra_solicitud.dart';
 import 'package:mi_almacen/models/Material.dart';
+import 'package:mi_almacen/models/compra_solicitud.dart';
 import 'package:mi_almacen/models/Proyecto.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/material_repository.dart';
@@ -10,6 +10,7 @@ import 'package:mi_almacen/repositories/proyecto_repository.dart';
 import 'package:mi_almacen/repositories/usuario_repository.dart';
 import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
+import 'package:mi_almacen/services/compra_sync_service.dart';
 
 class CompraViewModel extends ChangeNotifier {
   final CompraService compraService;
@@ -18,6 +19,7 @@ class CompraViewModel extends ChangeNotifier {
   final ProyectoRepository proyectoRepository;
   final UsuarioRepository usuarioRepository;
   final CompraSolicitudSyncService solicitudSyncService;
+  final CompraSyncService compraSyncService; // NUEVO
 
   CompraViewModel({
     required this.compraService,
@@ -26,9 +28,11 @@ class CompraViewModel extends ChangeNotifier {
     required this.proyectoRepository,
     required this.usuarioRepository,
     required this.solicitudSyncService,
+    required this.compraSyncService, // NUEVO
   });
 
   // ---------------- Solicitudes pendientes ----------------
+  // (sin cambios hasta la sección de Aprobar/Rechazar)
 
   bool _cargando = false;
   bool get cargando => _cargando;
@@ -59,24 +63,11 @@ class CompraViewModel extends ChangeNotifier {
     _nombresUsuarios = {
       for (final u in usuarios) u.id!: u.nombre,
     };
-    debugPrint('MAPA USUARIOS');
-    debugPrint(_nombresUsuarios.toString());
-
-    debugPrint(
-      'Nombre encontrado: ${_nombresUsuarios["wpJyJLzbEJi2d6c2NiM9"]}',
-    );
 
     _cargando = false;
-
-    for (final s in _solicitudes) {
-      debugPrint(
-        'Solicitud ${s.id} -> solicitanteId="${s.solicitanteId}"',
-      );
-    }
     notifyListeners();
   }
 
-  /// Sube solicitudes pendientes y descarga cambios recientes desde Firebase.
   Future<bool> sincronizar() async {
     _sincronizando = true;
     notifyListeners();
@@ -97,7 +88,8 @@ class CompraViewModel extends ChangeNotifier {
     return exito;
   }
 
-  // ---------------- Búsqueda de material (form de items) ----------------
+  // ---------------- Búsqueda de material ----------------
+  // (sin cambios)
 
   String _textoBusqueda = "";
   String get textoBusqueda => _textoBusqueda;
@@ -124,7 +116,8 @@ class CompraViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ---------------- Items en construcción para la compra ----------------
+  // ---------------- Items en construcción ----------------
+  // (sin cambios)
 
   final List<CompraItem> _itemsEnConstruccion = [];
   List<CompraItem> get itemsEnConstruccion =>
@@ -152,35 +145,62 @@ class CompraViewModel extends ChangeNotifier {
 
   // ---------------- Aprobar / Rechazar ----------------
 
-  Future<Compra> aprobar({
+  /// Devuelve null si falló (para que la UI muestre error),
+  /// o la Compra creada si tuvo éxito.
+  Future<Compra?> aprobar({
     required SolicitudCompra solicitud,
     required String ordenCompra,
     required TipoCompra tipoCompra,
     required String compradorId,
   }) async {
-    final compra = await compraService.aprobarSolicitud(
-      solicitud: solicitud,
-      ordenCompra: ordenCompra,
-      tipoCompra: tipoCompra,
-      compradorId: compradorId,
-      items: _itemsEnConstruccion,
-    );
+    late final Compra compra;
+
+    try {
+      compra = await compraService.aprobarSolicitud(
+        solicitud: solicitud,
+        ordenCompra: ordenCompra,
+        tipoCompra: tipoCompra,
+        compradorId: compradorId,
+        items: _itemsEnConstruccion,
+      );
+    } catch (e) {
+      debugPrint('Error al aprobar solicitud ${solicitud.id}: $e');
+      return null;
+    }
 
     limpiarItems();
     await cargar();
 
+    // Push inmediato a Firebase: la compra nueva y la solicitud
+    // (que quedó con sync_status = 0 al marcarse "aprobada").
+    // No bloqueamos la UI por esto, pero sí lo intentamos ya mismo
+    // en vez de esperar a un sync manual en otra pantalla.
+    unawaited(compraSyncService.sincronizarCompra(compra));
+    unawaited(solicitudSyncService.sincronizarPendientes());
+
     return compra;
   }
 
-  Future<void> rechazar({
+  Future<bool> rechazar({
     required SolicitudCompra solicitud,
     required String motivo,
   }) async {
-    await compraService.rechazarSolicitud(
-      solicitud: solicitud,
-      motivo: motivo,
-    );
+    try {
+      await compraService.rechazarSolicitud(
+        solicitud: solicitud,
+        motivo: motivo,
+      );
+    } catch (e) {
+      debugPrint('Error al rechazar solicitud ${solicitud.id}: $e');
+      return false;
+    }
 
     await cargar();
+
+    unawaited(solicitudSyncService.sincronizarPendientes());
+
+    return true;
   }
 }
+
+void unawaited(Future<void> future) {}

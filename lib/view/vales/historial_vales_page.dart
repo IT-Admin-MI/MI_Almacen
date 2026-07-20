@@ -23,8 +23,15 @@ class _HistorialValesPageState
   @override
   void initState() {
     super.initState();
-    widget.viewModel.cargarVales();
+    _cargar();
+
   }
+
+  void _cargar() async{
+  widget.viewModel.cargarVales();
+  await widget.viewModel.actualizar();
+  }
+
 
   Future<void> _seleccionarFecha({
     required bool desde,

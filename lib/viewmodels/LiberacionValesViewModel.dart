@@ -4,16 +4,19 @@ import 'package:mi_almacen/models/Vale.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
 import 'package:mi_almacen/repositories/vale_repository.dart';
 import 'package:mi_almacen/services/firebase_service.dart';
+import 'package:mi_almacen/services/sync_service.dart';
 
 class LiberacionValesViewModel extends ChangeNotifier {
   final ValeRepository valeRepository;
   final ProyectoRepository proyectoRepository;
   final FirebaseService firebaseService;
+  final SyncService syncService;
 
   LiberacionValesViewModel({
     required this.valeRepository,
     required this.proyectoRepository,
     required this.firebaseService,
+    required this.syncService,
   });
 
   bool _cargando = false;
@@ -51,7 +54,25 @@ class LiberacionValesViewModel extends ChangeNotifier {
   }
 
   Future<void> actualizar() async {
-    await cargarVales();
+
+    _cargando = true;
+
+    notifyListeners();
+
+    try {
+
+      await syncService.sincronizarVales();
+
+      await cargarVales();
+
+    } finally {
+
+      _cargando = false;
+
+      notifyListeners();
+
+    }
+
   }
 
   void seleccionarProyecto(Proyecto? proyecto) {

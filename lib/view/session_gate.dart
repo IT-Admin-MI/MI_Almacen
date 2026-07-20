@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/proyecto_repository.dart';
 import 'package:mi_almacen/repositories/usuario_repository.dart';
+import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/historial_compras_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/login_viewmodel.dart';
@@ -33,6 +35,9 @@ class SessionGate extends StatefulWidget {
   final CompraSyncService compraSyncService;
   final CompraSolicitudSyncService compraSolicitudSyncService;
   final HerramientasViewModel herramientasViewModel;
+  final HistorialComprasViewModel historialComprasViewModel;
+  final CompraService compraService;
+
 
   final UsuarioRepository usuarioRepository;
   const SessionGate({
@@ -52,6 +57,8 @@ class SessionGate extends StatefulWidget {
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
     required this.usuarioRepository,
+    required this.historialComprasViewModel,
+    required this.compraService,
   });
 
   @override
@@ -111,6 +118,8 @@ class _SessionGateState extends State<SessionGate> {
         compraSolicitudSyncService: widget.compraSolicitudSyncService,
         herramientasViewModel: widget.herramientasViewModel,
         usuarioRepository: widget.usuarioRepository,
+        historialComprasViewModel: widget.historialComprasViewModel,
+        compraService: widget.compraService,
       );
     }
 

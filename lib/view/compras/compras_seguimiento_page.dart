@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mi_almacen/models/Compra.dart';
 import 'package:mi_almacen/viewmodels/seguimiento_compras_viewmodel.dart';
 import 'package:mi_almacen/widgets/compra_timeline_card.dart';
 import 'package:mi_almacen/widgets/status_overlay.dart';
@@ -17,13 +18,19 @@ class SeguimientoComprasPage extends StatefulWidget {
 }
 
 class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
+  final Set<String> _procesando = {}; // NUEVO: ids de compras en progreso
+
   @override
   void initState() {
     super.initState();
     widget.viewModel.addListener(_refresh);
-    widget.viewModel.cargar();
+    _inicializar();
   }
 
+  Future<void> _inicializar() async {
+    await widget.viewModel.sincronizar();
+    await widget.viewModel.cargar();
+  }
   @override
   void dispose() {
     widget.viewModel.removeListener(_refresh);
@@ -40,7 +47,12 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Seguimiento de Compras'),
+          centerTitle: true,
+          title: Image.asset(
+            'assets/images/logo_ext.png',
+            height: 40,
+            fit: BoxFit.contain,
+          ),
           bottom: const TabBar(
             tabs: [
               Tab(text: "Estado de compras"),
@@ -70,13 +82,13 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
     if (vm.cargando && vm.compras.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-
-    if (vm.solicitudes.isEmpty) {
+    if (vm.compras.isEmpty) {
       return _envolverConSync(
         SizedBox(
           height: MediaQuery.of(context).size.height * 0.7,
           child: Center(
             child: Column(
+
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
@@ -100,26 +112,63 @@ class _SeguimientoComprasPageState extends State<SeguimientoComprasPage> {
       );
     }
     return _envolverConSync(
-      ListView.builder(
-        itemCount: vm.compras.length,
-        itemBuilder: (_, index) {
-          final compra = vm.compras[index];
+        ListView.builder(
+          itemCount: vm.compras.length,
+          itemBuilder: (_, index) {
+            final compra = vm.compras[index];
 
-          return CompraTimelineCard(
-            key: ValueKey(compra.id),
-            compra: compra,
-            expandido: vm.estaExpandido(compra.id!),
-            esUsuarioCompras: vm.esUsuarioCompras,
-            onToggle: () => vm.toggleExpandido(compra.id!),
-            onAvanzar: () => vm.avanzarEstado(compra),
-          );
-        },
-      ),
+            return CompraTimelineCard(
+              key: ValueKey(compra.id),
+              compra: compra,
+              expandido: vm.estaExpandido(compra.id!),
+              esUsuarioCompras: vm.esUsuarioCompras,
+              esSolicitante: vm.esSolicitanteDe(compra),
+              pendienteAprobacion: vm.requiereAprobacionPendiente(compra),
+              procesando: _procesando.contains(compra.id),
+              onToggle: () => vm.toggleExpandido(compra.id!),
+              onAvanzar: () => _avanzar(compra),
+              onAprobarRevision: () => _aprobarRevision(compra),
+            );
+          },
+        ),
     );
   }
 
-  /// Envuelve el contenido con un gesto de swipe (en el primer elemento
-  /// invisible arriba) para disparar la sincronización manual con Firebase.
+  Future<void> _avanzar(Compra compra) async {
+    setState(() => _procesando.add(compra.id!));
+    final resultado = await widget.viewModel.avanzarEstado(compra);
+    if (mounted) setState(() => _procesando.remove(compra.id!));
+
+    if (!resultado.success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo actualizar el estado. Intenta de nuevo.')),
+        );
+      }
+      return;
+    }
+
+    if (resultado.liberada && mounted) {
+      StatusOverlay.mostrar(
+        context,
+        exito: true,
+        mensaje: 'Compra finalizada',
+        duracion: const Duration(seconds: 2),
+      );
+    }
+  }
+
+  Future<void> _aprobarRevision(Compra compra) async {
+    setState(() => _procesando.add(compra.id!));
+    final ok = await widget.viewModel.aprobarRevisionSolicitante(compra);
+    if (mounted) setState(() => _procesando.remove(compra.id!));
+
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo aprobar la compra. Intenta de nuevo.')),
+      );
+    }
+  }
   Widget _envolverConSync(Widget child) {
     final vm = widget.viewModel;
 

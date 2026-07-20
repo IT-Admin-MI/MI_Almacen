@@ -5,6 +5,7 @@ import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/compra_repository_impl.dart';
 import 'package:mi_almacen/repositories/herramienta_repository_impl.dart';
 import 'package:mi_almacen/repositories/usuario_repository.dart';
+import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_service_impl.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service_impl.dart';
@@ -25,6 +26,7 @@ import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/historial_compras_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/home_viewmodel.dart';
 
@@ -195,6 +197,7 @@ Future<void> main() async {
     valeRepository: valeRepository,
     proyectoRepository: proyectoRepository,
     firebaseService: firebaseService,
+    syncService: syncService,
   );
 
   final aprobacionValesViewModel = AprobacionValesViewModel(
@@ -240,7 +243,12 @@ Future<void> main() async {
     compraRepository: compraRepositoy,
     usuarioRepository: usuarioRepository,
     solicitudSyncService: compraSolicitudSyncService,
+    compraSyncService: compraSyncService,
   );
+  final historialComprasViewModel = HistorialComprasViewModel(
+      compraService: compraService,
+      compraSyncService: compraSyncService,
+      usuarioRepository: usuarioRepository);
 
   // ==========================
   // APP
@@ -264,6 +272,8 @@ Future<void> main() async {
       compraSolicitudSyncService: compraSolicitudSyncService,
       herramientasViewModel: herramientasViewModel,
       usuarioRepository: usuarioRepository,
+      compraService: compraService,
+      historialComprasViewModel: historialComprasViewModel,
 
     ),
   );
@@ -286,6 +296,8 @@ class MyApp extends StatelessWidget {
   final CompraSolicitudSyncService compraSolicitudSyncService;
   final HerramientasViewModel herramientasViewModel;
   final UsuarioRepository usuarioRepository;
+  final CompraService compraService;
+  final HistorialComprasViewModel historialComprasViewModel;
 
   const MyApp({
     super.key,
@@ -305,6 +317,8 @@ class MyApp extends StatelessWidget {
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
     required this.usuarioRepository,
+    required this.compraService,
+    required this.historialComprasViewModel,
   });
 
   @override
@@ -329,6 +343,8 @@ class MyApp extends StatelessWidget {
         compraSolicitudSyncService: compraSolicitudSyncService,
         herramientasViewModel: herramientasViewModel,
         usuarioRepository: usuarioRepository,
+        historialComprasViewModel: historialComprasViewModel,
+        compraService: compraService,
       ),
 
       routes: {
@@ -348,6 +364,8 @@ class MyApp extends StatelessWidget {
           compraSolicitudSyncService: compraSolicitudSyncService,
           herramientasViewModel: herramientasViewModel,
           usuarioRepository: usuarioRepository,
+          historialComprasViewModel: historialComprasViewModel,
+          compraService: compraService,
         ),
       },
     );

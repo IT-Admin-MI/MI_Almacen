@@ -66,6 +66,11 @@ class ValeSyncServiceImpl
   @override
   Future<void> descargarVales() async {
     final valesFirebase = await firebaseService.obtenerVales();
+
+    for (final v in valesFirebase) {
+      print(
+          'Firebase -> ${v.id} estado=${v.estado} liberado=${v.liberado}');
+    }
     final idsFirebase = valesFirebase.map((v) => v.id).toSet();
 
     // 1. Upsert: insertar nuevos, actualizar existentes

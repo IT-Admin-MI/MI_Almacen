@@ -72,18 +72,41 @@ class _ComprasPageState extends State<ComprasPage> {
             ),
           ],
         ),
-      ) // <- Faltaba este paréntesis para cerrar el Center
-          : ListView.builder( // <- Faltaba la acción si "vm.solicitudes" NO está vacío
+      )
+          : ListView.builder(
         itemCount: vm.solicitudes.length,
-        itemBuilder: (context, index) => Text('Solicitud ${index}'), // Reemplaza con tu widget personalizado
+        itemBuilder: (context, index) {
+          final solicitud = vm.solicitudes[index];
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: ListTile(
+              onTap: () => _abrirRevision(solicitud),
+              title: Text(
+                solicitud.descripcion,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                'Solicitante: ${vm.nombreSolicitante(solicitud.solicitanteId)}\n'
+                    '${solicitud.fechaSolicitud.day}/${solicitud.fechaSolicitud.month}/${solicitud.fechaSolicitud.year}'
+                    '${solicitud.requiereRevisionSolicitante ? ' · Requiere revisión' : ''}',
+              ),
+              isThreeLine: true,
+              trailing: const Icon(Icons.chevron_right),
+            ),
+          );
+        },
       ),
     );
   }
 
 
+
   Future<void> _abrirRevision(SolicitudCompra solicitud) async {
     widget.viewModel.limpiarItems();
     final _formKey = GlobalKey<FormState>();
+    bool guardando = false;
 
     final ordenController = TextEditingController();
     TipoCompra tipoCompra = TipoCompra.proyecto;
@@ -160,7 +183,6 @@ class _ComprasPageState extends State<ComprasPage> {
 
                         const SizedBox(height: 20),
                         Row(
-
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
@@ -226,7 +248,12 @@ class _ComprasPageState extends State<ComprasPage> {
                           children: [
                             Expanded(
                               child: OutlinedButton(
-                                onPressed: () => _rechazar(solicitud),
+                                onPressed: guardando
+                                    ? null
+                                    : () => _rechazar(
+                                  solicitud,
+                                  setGuardando: (v) => setModalState(() => guardando = v),
+                                ),
                                 child: const Text('Rechazar'),
                               ),
                             ),
@@ -234,29 +261,33 @@ class _ComprasPageState extends State<ComprasPage> {
                             Expanded(
                               child: FilledButton(
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: Colors.metint01, // Color de fondo del botón
-                                  foregroundColor: Colors.white, // Color del texto/icono
+                                  backgroundColor: Colors.metint01,
+                                  foregroundColor: Colors.white,
                                 ),
-                                onPressed: () {
+                                onPressed: guardando
+                                    ? null
+                                    : () {
                                   setModalState(() {
                                     intentoAprobar = true;
                                   });
 
-                                  if (!_formKey.currentState!.validate()) {
-                                    return;
-                                  }
-
-                                  if (widget.viewModel.itemsEnConstruccion.isEmpty) {
-                                    return;
-                                  }
+                                  if (!_formKey.currentState!.validate()) return;
+                                  if (widget.viewModel.itemsEnConstruccion.isEmpty) return;
 
                                   _aprobar(
                                     solicitud: solicitud,
                                     ordenCompra: ordenController.text,
                                     tipoCompra: tipoCompra,
+                                    setGuardando: (v) => setModalState(() => guardando = v),
                                   );
                                 },
-                                child: const Text('Aprobar'),
+                                child: guardando
+                                    ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                                    : const Text('Aprobar'),
                               ),
                             ),
                           ],
@@ -488,20 +519,37 @@ class _ComprasPageState extends State<ComprasPage> {
     required SolicitudCompra solicitud,
     required String ordenCompra,
     required TipoCompra tipoCompra,
+    required void Function(bool guardando) setGuardando,
   }) async {
     if (ordenCompra.trim().isEmpty) return;
 
-    await widget.viewModel.aprobar(
+    setGuardando(true);
+
+    final compra = await widget.viewModel.aprobar(
       solicitud: solicitud,
       ordenCompra: ordenCompra.trim(),
       tipoCompra: tipoCompra,
       compradorId: widget.usuarioId,
     );
 
+    setGuardando(false);
+
+    if (compra == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo aprobar la solicitud. Intenta de nuevo.')),
+        );
+      }
+      return;
+    }
+
     if (mounted) Navigator.pop(context);
   }
 
-  Future<void> _rechazar(SolicitudCompra solicitud) async {
+  Future<void> _rechazar(
+      SolicitudCompra solicitud, {
+        required void Function(bool guardando) setGuardando,
+      }) async {
     final motivoController = TextEditingController();
 
     final confirmado = await showDialog<bool>(
@@ -525,12 +573,26 @@ class _ComprasPageState extends State<ComprasPage> {
       ),
     );
 
-    if (confirmado == true) {
-      await widget.viewModel.rechazar(
-        solicitud: solicitud,
-        motivo: motivoController.text.trim(),
-      );
-      if (mounted) Navigator.pop(context); // cierra el bottom sheet
+    if (confirmado != true) return;
+
+    setGuardando(true);
+
+    final ok = await widget.viewModel.rechazar(
+      solicitud: solicitud,
+      motivo: motivoController.text.trim(),
+    );
+
+    setGuardando(false);
+
+    if (!ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo rechazar la solicitud. Intenta de nuevo.')),
+        );
+      }
+      return;
     }
+
+    if (mounted) Navigator.pop(context); // cierra el bottom sheet
   }
 }

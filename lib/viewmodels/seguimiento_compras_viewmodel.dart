@@ -9,6 +9,14 @@ import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/utils/id_generator.dart';
 
+class ResultadoAvance {
+  final bool success;
+  final bool liberada;
+
+  const ResultadoAvance({required this.success, required this.liberada});
+}
+
+
 class SeguimientoComprasViewModel extends ChangeNotifier {
   final CompraRepository compraRepository;
   final AuthService authService;
@@ -35,6 +43,12 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
   int? _rolUsuario;
   bool get esUsuarioCompras => _rolUsuario == Roles.compras;
 
+  String? _usuarioActualId;
+
+  // solicitudId -> solicitanteId, para saber quién es el dueño de cada compra
+  // sin tener que agregar esa columna a Compra.
+  Map<String, String> _solicitantesPorSolicitud = {};
+
   Map<String, String> _nombresUsuarios = {};
   String nombreSolicitante(String solicitanteId) {
     return _nombresUsuarios[solicitanteId] ?? solicitanteId;
@@ -52,6 +66,20 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// True si el usuario logueado es quien creó la solicitud detrás de esta compra.
+  bool esSolicitanteDe(Compra compra) {
+    if (_usuarioActualId == null) return false;
+    final solicitanteId = _solicitantesPorSolicitud[compra.solicitudId];
+    return solicitanteId != null && solicitanteId == _usuarioActualId;
+  }
+
+  /// True si la compra está detenida esperando la aprobación del solicitante.
+  bool requiereAprobacionPendiente(Compra compra) {
+    return compra.estado == EstadoCompra.revisionSolicitante &&
+        compra.requiereRevisionSolicitante &&
+        !compra.revisionSolicitanteRealizada;
+  }
+
   /// Carga SOLO datos locales (SQLite). Rápido, sin red.
   /// Se llama al entrar a la página y después de cada acción local.
   Future<void> cargar() async {
@@ -64,14 +92,23 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
 
     final sesion = await authService.obtenerSesion();
     _rolUsuario = sesion?.rol;
+    _usuarioActualId = sesion?.usuarioId;
 
-    compras = await compraRepository.getVigentes();
+    final comprasVigentes = await compraRepository.getVigentes();
+    // Filtro de seguridad: aunque getVigentes() ya debería excluirlas,
+    // nunca mostramos compras liberadas en esta pantalla.
+    compras = comprasVigentes.where((c) => !c.liberada).toList();
 
     final todasLasSolicitudes = await compraRepository.getSolicitudes();
 
+    // En SeguimientoComprasViewModel.cargar()
     solicitudes = todasLasSolicitudes
-        .where((s) => s.estado != EstadoSolicitud.rechazada)
+        .where((s) => s.estado == EstadoSolicitud.pendiente)
         .toList();
+
+    _solicitantesPorSolicitud = {
+      for (final s in todasLasSolicitudes) s.id: s.solicitanteId,
+    };
 
     final usuarios = await usuarioRepository.getAll();
     _nombresUsuarios = {
@@ -92,11 +129,11 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
     bool exito = true;
 
     try {
-      await compraSolicitudSyncService.sincronizarPendientes();
       await compraSolicitudSyncService.descargarSolicitudes();
+      await compraSolicitudSyncService.sincronizarPendientes();
 
-      await compraSyncService.sincronizarPendientes();
       await compraSyncService.descargarCompras();
+      await compraSyncService.sincronizarPendientes();
 
       await cargar();
     } catch (e) {
@@ -138,22 +175,75 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
     unawaited(compraSolicitudSyncService.sincronizarSolicitud(solicitud));
   }
 
-  /// Avanza la compra al siguiente estado. Solo actualiza local + sube
-  /// ese cambio puntual, sin disparar una descarga completa de red
-  /// (eso evita el parpadeo/colapso del contenedor).
-  Future<void> avanzarEstado(Compra compra) async {
+  Future<ResultadoAvance> avanzarEstado(Compra compra) async {
     final estados = EstadoCompra.values;
     final indiceActual = compra.estado.index;
 
     if (indiceActual >= estados.length - 1) {
-      return;
+      return const ResultadoAvance(success: false, liberada: false);
+    }
+
+    if (requiereAprobacionPendiente(compra)) {
+      return const ResultadoAvance(success: false, liberada: false);
     }
 
     final siguienteEstado = estados[indiceActual + 1];
+    final esLiberacion = siguienteEstado == EstadoCompra.liberada;
+    final ahora = DateTime.now();
 
-    await compraRepository.updateEstado(compra.id!, siguienteEstado);
+    final compraActualizada = compra.copyWith(
+      estado: siguienteEstado,
+      liberada: esLiberacion ? true : compra.liberada,
+      fechaLiberacion: esLiberacion ? ahora : compra.fechaLiberacion,
+      estatus: esLiberacion ? 0 : compra.estatus,
+      syncStatus: 0,
+    );
 
-    final compraActualizada = compra.copyWith(estado: siguienteEstado);
+    try {
+      await compraRepository.update(compraActualizada);
+    } catch (e) {
+      debugPrint('Error al actualizar estado de compra ${compra.id}: $e');
+      return const ResultadoAvance(success: false, liberada: false);
+    }
+
+    if (esLiberacion) {
+      compras = compras.where((c) => c.id != compra.id).toList();
+    } else {
+      final index = compras.indexWhere((c) => c.id == compra.id);
+      if (index != -1) {
+        compras = [...compras]..[index] = compraActualizada;
+      }
+    }
+    notifyListeners();
+
+    try {
+      await compraSyncService.sincronizarCompra(compraActualizada);
+    } catch (e) {
+      debugPrint('Error al sincronizar compra ${compra.id} con Firebase: $e');
+    }
+
+    return ResultadoAvance(success: true, liberada: esLiberacion);
+  }
+
+  /// El solicitante original aprueba la compra en el paso de revisión,
+  /// liberando al usuario de compras para continuar avanzando el estado.
+  Future<bool> aprobarRevisionSolicitante(Compra compra) async {
+    final sesion = await authService.obtenerSesion();
+    if (sesion == null) return false;
+
+    final compraActualizada = compra.copyWith(
+      revisionSolicitanteRealizada: true,
+      fechaRevisionSolicitante: DateTime.now(),
+      usuarioRevisionId: sesion.usuarioId,
+      syncStatus: 0, // <- igual aquí
+    );
+
+    try {
+      await compraRepository.update(compraActualizada);
+    } catch (e) {
+      debugPrint('Error al aprobar revisión de compra ${compra.id}: $e');
+      return false;
+    }
 
     final index = compras.indexWhere((c) => c.id == compra.id);
     if (index != -1) {
@@ -161,9 +251,15 @@ class SeguimientoComprasViewModel extends ChangeNotifier {
     }
     notifyListeners();
 
-    // Sube el cambio en segundo plano, sin bloquear la UI ni recargar todo.
-    unawaited(compraSyncService.sincronizarCompra(compraActualizada));
+    try {
+      await compraSyncService.sincronizarCompra(compraActualizada);
+    } catch (e) {
+      debugPrint('Error al sincronizar aprobación de compra ${compra.id}: $e');
+    }
+
+    return true;
   }
+
 }
 
 void unawaited(Future<void> future) {}

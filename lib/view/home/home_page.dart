@@ -4,11 +4,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:mi_almacen/constants/roles.dart';
 import 'package:mi_almacen/repositories/compra_repository.dart';
 import 'package:mi_almacen/repositories/usuario_repository.dart';
+import 'package:mi_almacen/services/compra_service.dart';
 import 'package:mi_almacen/services/compra_solicitud_sync_service.dart';
 import 'package:mi_almacen/services/compra_sync_service.dart';
 import 'package:mi_almacen/view/admin/admin_db_page.dart';
 import 'package:mi_almacen/view/compras/compras_page.dart';
 import 'package:mi_almacen/view/compras/compras_seguimiento_page.dart';
+import 'package:mi_almacen/view/compras/historial_compras_page.dart';
 import 'package:mi_almacen/view/herramientas/herramientas_page.dart';
 import 'package:mi_almacen/view/vales/historial_vales_page.dart';
 import 'package:mi_almacen/view/vales/liberacionValesPage.dart';
@@ -17,6 +19,7 @@ import 'package:mi_almacen/viewmodels/LiberacionValesViewModel.dart';
 import 'package:mi_almacen/viewmodels/admin_db_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/aprobacion_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/herramientas_viewmodel.dart';
+import 'package:mi_almacen/viewmodels/historial_compras_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/historial_vales_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/compra_viewmodel.dart';
 import 'package:mi_almacen/viewmodels/seguimiento_compras_viewmodel.dart';
@@ -35,6 +38,10 @@ class HomePage extends StatefulWidget {
   final AuthService authService;
 
   final CompraSyncService compraSyncService;
+
+  final CompraService compraService;
+
+  final UsuarioRepository usuarioRepository;
 
   final ProyectoRepository proyectoRepository;
 
@@ -56,10 +63,11 @@ class HomePage extends StatefulWidget {
 
   final HerramientasViewModel herramientasViewModel;
 
+  final HistorialComprasViewModel historialComprasViewModel;
+
 
   final CompraSolicitudSyncService compraSolicitudSyncService;
 
-  final UsuarioRepository usuarioRepository;
   const HomePage({
     super.key,
     required this.authService,
@@ -76,6 +84,8 @@ class HomePage extends StatefulWidget {
     required this.compraSolicitudSyncService,
     required this.herramientasViewModel,
     required this.usuarioRepository,
+    required this.historialComprasViewModel,
+    required this.compraService,
   });
 
   @override
@@ -214,6 +224,16 @@ class _HomePageState
       if (!a.status) return 0;
       return a.orden.compareTo(b.orden);
     });
+  }
+
+  void _agregarGrupo(List<Widget> menu, List<Widget> grupo) {
+    if (grupo.isEmpty) return;
+
+    if (menu.isNotEmpty) {
+      menu.add(const Divider());
+    }
+
+    menu.addAll(grupo);
   }
 
   Future<void> _mostrarDialogoEdicion(Proyecto proyecto) async {
@@ -648,228 +668,247 @@ class _HomePageState
 
   @override
   Widget build(BuildContext context) {
+    final menu = <Widget>[];
+
+    _agregarGrupo(menu, [
+      ListTile(
+        leading: const Icon(Icons.task),
+        title: const Text('Proyectos'),
+        onTap: () => Navigator.pop(context),
+      ),
+      ListTile(
+        leading: const Icon(Icons.receipt_long),
+        title: const Text('Crear Vale'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ValesPage(
+                viewModel: widget.valeViewModel,
+              ),
+            ),
+          );
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.history),
+        title: const Text('Historial de Vales'),
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HistorialValesPage(
+                viewModel: widget.historialValesViewModel,
+              ),
+            ),
+          );
+        },
+      ),
+    ]);
+
+    _agregarGrupo(menu, [
+      if (usuario != null &&
+          (usuario!.rol == Roles.administrador ||
+              usuario!.rol == Roles.supervisor))
+        ListTile(
+          leading: const Icon(Icons.fact_check),
+          title: const Text('Aprobación de Vales'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AprobacionValesPage(
+                  viewModel: widget.aprobacionValesViewModel,
+                ),
+              ),
+            );
+          },
+        ),
+
+      if (usuario != null &&
+          (usuario!.rol == Roles.administrador ||
+              usuario!.rol == Roles.almacen))
+        ListTile(
+          leading: const Icon(Icons.inventory),
+          title: const Text('Entrega de Vales'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => LiberacionValesPage(
+                  viewModel: widget.liberacionValesViewModel,
+                ),
+              ),
+            );
+          },
+        ),
+
+      if (usuario != null &&
+          (usuario!.rol == Roles.administrador ||
+              usuario!.rol == Roles.almacen))
+        ListTile(
+          leading: const Icon(Icons.build),
+          title: const Text('Herramientas prestadas'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => HerramientasPage(
+                  viewModel: widget.herramientasViewModel,
+                ),
+              ),
+            );
+          },
+        ),
+    ]);
+
+    _agregarGrupo(menu, [
+      if (usuario != null &&
+          (usuario!.rol == Roles.administrador ||
+              usuario!.rol == Roles.supervisor ||
+              usuario!.rol == Roles.compras ||
+              usuario!.rol == Roles.almacen))
+        ListTile(
+          leading: const Icon(Icons.shopping_bag),
+          title: const Text('Seguimiento de Compras'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SeguimientoComprasPage(
+                  viewModel: SeguimientoComprasViewModel(
+                    compraRepository: widget.compraRepository,
+                    authService: widget.authService,
+                    compraSolicitudSyncService:
+                    widget.compraSolicitudSyncService,
+                    compraSyncService: widget.compraSyncService,
+                    usuarioRepository: widget.usuarioRepository,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+
+      if (usuario != null &&
+          (usuario!.rol == Roles.compras ||
+              usuario!.rol == Roles.administrador))
+        ListTile(
+          leading: const Icon(Icons.add_shopping_cart),
+          title: const Text('Crear Compra'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ComprasPage(
+                  viewModel: widget.compraViewModel,
+                  usuarioId: '',
+                ),
+              ),
+            );
+          },
+        ),
+
+      if (usuario != null &&
+          (usuario!.rol == Roles.compras ||
+              usuario!.rol == Roles.administrador))
+        ListTile(
+          leading: const Icon(Icons.manage_history),
+          title: const Text('Historial de compras'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => HistorialComprasPage(
+                  viewModel: HistorialComprasViewModel(
+                    compraService: widget.compraService,
+                    compraSyncService: widget.compraSyncService,
+                    usuarioRepository: widget.usuarioRepository,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+    ]);
+
+    _agregarGrupo(menu, [
+      if (usuario != null &&
+          usuario!.rol == Roles.administrador)
+        ListTile(
+          leading: const Icon(Icons.admin_panel_settings),
+          title: const Text('Administrar base de datos'),
+          onTap: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => AdminDbPage(
+                  viewModel: widget.adminDbViewModel,
+                ),
+              ),
+            );
+          },
+        ),
+    ]);
+
+    _agregarGrupo(menu, [
+      ListTile(
+        leading: const Icon(Icons.logout),
+        title: const Text('Cerrar sesión'),
+        onTap: cerrarSesion,
+      ),
+    ]);
 
     return Scaffold(
-
       appBar: AppBar(
-
         centerTitle: true,
-
         title: Image.asset(
           'assets/images/logo_ext.png',
           height: 40,
           fit: BoxFit.contain,
         ),
       ),
-
       drawer: Drawer(
-        child: SafeArea(  // ← Respeta la zona segura del sistema
+        child: SafeArea(
           child: Column(
             children: [
               DrawerHeader(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.zero,
                       child: Image.asset(
                         'assets/images/logo_bn.png',
                         width: 56,
                         height: 50,
-                        fit: BoxFit.cover,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       usuario?.nombre ?? '',
-                      textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      usuario?.descripcion ?? '',
-                      textAlign: TextAlign.center,
-                    ),
+                    Text(usuario?.descripcion ?? ''),
                   ],
                 ),
               ),
-
               Expanded(
                 child: ListView(
                   padding: EdgeInsets.zero,
-                  children: [
-
-                    ListTile(
-                      leading: const Icon(Icons.task),
-                      title: const Text('Proyectos'),
-                      onTap: () => Navigator.pop(context),
-                    ),
-
-                    ListTile(
-                      leading: const Icon(Icons.receipt_long),
-                      title: const Text('Crear Vale'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ValesPage(viewModel: widget.valeViewModel),
-                          ),
-                        );
-                      },
-                    ),
-
-
-                    ListTile(
-                      leading: const Icon(Icons.history),
-                      title: const Text('Historial de Vales'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => HistorialValesPage(
-                              viewModel: widget.historialValesViewModel,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const Divider(),
-
-                    // Solo Administrador y Compras
-                    if (usuario != null && (usuario?.rol == 0 || usuario?.rol == 1))
-                      ListTile(
-                        leading: const Icon(Icons.fact_check),
-                        title: const Text('Aprobación de Vales'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AprobacionValesPage(
-                                viewModel: widget.aprobacionValesViewModel,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                    // Solo Administrador y Almacén
-                    if (usuario != null && (usuario?.rol == 0 || usuario?.rol == 3))
-                      ListTile(
-                        leading: const Icon(Icons.inventory),
-                        title: const Text('Entrega de Vales'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => LiberacionValesPage(
-                                viewModel: widget.liberacionValesViewModel,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                    // Solo Administrador y Almacén (mismo criterio que Entrega de Vales)
-                    if (usuario != null && (usuario?.rol == Roles.administrador || usuario?.rol == Roles.almacen))
-                      ListTile(
-                        leading: const Icon(Icons.build),
-                        title: const Text('Herramientas prestadas'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => HerramientasPage(
-                                viewModel: widget.herramientasViewModel,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    const Divider(),
-
-
-                    if (usuario != null &&
-                        (usuario!.rol == Roles.administrador ||
-                            usuario?.rol == Roles.supervisor ||
-                            usuario?.rol == Roles.compras ||
-                            usuario?.rol == Roles.almacen))
-                      ListTile(
-                        leading: const Icon(Icons.shopping_bag),
-                        title: const Text('Seguimiento de Compras'),
-                        onTap: () {
-                          Navigator.pop(context);
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SeguimientoComprasPage(
-                                viewModel: SeguimientoComprasViewModel(
-                                  compraRepository: widget.compraRepository,
-                                  authService: widget.authService,
-                                  compraSolicitudSyncService: widget.compraSolicitudSyncService,
-                                  compraSyncService: widget.compraSyncService,
-                                  usuarioRepository: widget.usuarioRepository,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                    if (usuario != null && (usuario?.rol == Roles.compras || usuario?.rol == Roles.administrador))
-                    ListTile(
-                      leading: const Icon(Icons.add_shopping_cart),
-                      title: const Text('Nueva Compra'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ComprasPage(
-                              viewModel: widget.compraViewModel,
-                              usuarioId: '',
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-
-                    const Divider(),
-                    // Solo Administrador
-                    if (usuario != null && usuario?.rol == Roles.administrador)
-                      ListTile(
-                        leading: const Icon(Icons.admin_panel_settings),
-                        title: const Text('Administrar base de datos'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AdminDbPage(
-                                viewModel: widget.adminDbViewModel,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    const Divider(),
-
-                    ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: const Text('Cerrar sesión'),
-                      onTap: cerrarSesion,
-                    ),
-                  ],
+                  children: menu,
                 ),
               ),
             ],
@@ -884,47 +923,48 @@ class _HomePageState
         child: const Icon(Icons.add),
       )
           : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-
+      floatingActionButtonLocation:
+      FloatingActionButtonLocation.centerFloat,
       body: SafeArea(
-      child: Column(
-        children: [
-          const Text(
-            'Lista de proyectos',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+        child: Column(
+          children: [
+            const Text(
+              'Lista de proyectos',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          // ← Todo dentro del AnimatedBuilder
-          AnimatedBuilder(
-            animation: widget.homeViewModel,
-            builder: (context, _) {
-              return Expanded(
-                child: Column(
-                  children: [
-                    if (esAdmin || esSupervisor)
-                      SwitchListTile(
-                        title: Text(
-                          widget.homeViewModel.mostrarTodos
-                              ? 'Mostrar todos los proyectos'
-                              : 'Mostrar todos los proyectos',
+            AnimatedBuilder(
+              animation: widget.homeViewModel,
+              builder: (context, _) {
+                return Expanded(
+                  child: Column(
+                    children: [
+                      if (esAdmin || esSupervisor)
+                        SwitchListTile(
+                          title: const Text(
+                            'Mostrar todos los proyectos',
+                          ),
+                          value: widget.homeViewModel.mostrarTodos,
+                          onChanged:
+                          widget.homeViewModel.cambiarMostrarTodos,
                         ),
-                        value: widget.homeViewModel.mostrarTodos,
-                        onChanged: widget.homeViewModel.cambiarMostrarTodos,
+                      Expanded(
+                        child: cargandoProyectos
+                            ? const Center(
+                          child:
+                          CircularProgressIndicator(),
+                        )
+                            : projetosVacios(),
                       ),
-                    Expanded(
-                      child: cargandoProyectos
-                          ? const Center(child: CircularProgressIndicator())
-                          : projetosVacios(),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

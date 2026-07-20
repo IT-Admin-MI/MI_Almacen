@@ -29,7 +29,12 @@ class _LiberacionValesPageState
   void initState() {
     super.initState();
     widget.viewModel.addListener(_refresh);
+    _cargar();
+  }
+  void _cargar() async {
+    await widget.viewModel.actualizar();
     widget.viewModel.cargarVales();
+
   }
 
   @override
